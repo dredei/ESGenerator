@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <meta name="robots" content="index, follow" />
+    <meta name="keywords" content="" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" type="text/css" href="http://generator.waspace.net/css/style.css"/>
+    <!--[if lte IE 9]>
+    <link href="http://generator.waspace.net/css/ie9.css" type="text/css" rel="stylesheet">
+    <![endif]-->
+    <!--[if lte IE 8]>
+    <link href="http://generator.waspace.net/css/ie8.css" type="text/css" rel="stylesheet">
+    <![endif]-->
+    <!--[if lte IE 7]>
+    <link href="http://generator.waspace.net/css/ie7.css" type="text/css" rel="stylesheet">
+    <![endif]-->
+    <!--[if lte IE 6]>
+    <link href="http://generator.waspace.net/css/ie6.css" type="text/css" rel="stylesheet">
+    <![endif]-->
+    <link href="http://generator.waspace.net/favicon.ico" rel="shortcut icon" type="image/x-icon">
+    <script type="text/javascript" src="js/jquery/jquery-1.7.2.min.js"></script>
+    <script type="text/javascript" src="js/jquery/jquery.json-2.3.js"></script>
+    <script type="text/javascript" src="js/jquery/jquery.browser.mobile.js"></script>
+    <script type="text/javascript" src="js/jquery/jquery-ui-1.8.18.custom.min.js"></script>
+    <script type="text/javascript">
+        function cwe(tag, attr, parent){
+            var element = document.createElement(tag);
+            if(attr){
+                if (attr.length > 0) {
+                    var array = attr.split(";");
+                    for (var x = 0; x<=array.length - 1; x++) {
+                        var tattr = array[x].split(",");
+                        element.setAttribute(tattr[0], tattr[1]);
+                    };
+                };
+            };
+
+            if(parent){
+                if(window.jQuery) $(parent).append(element);
+                else parent.appendChild(element);
+            };
+
+            return element;
+        };
+        function addScript(path, anticache){
+            return cwe('script','type,text/javascript;src,'+path+((anticache)?"?rnd="+Math.random():""), document.getElementsByTagName('head')[0]);
+        };
+
+        addScript("js/wa_gen_api.js",true);
+        addScript("js/wa_gen.js",true);
+
+        wa_gen.init();
+    </script>
+</head>
+<body>
+<noscript>
+    <div id="noscript"><h3>Внимание! Отключен JavaScript!</h3><p>Для работы веб-приложения WaspAce необходимо включить javascript в вашем браузере.</p></div>
+    <div id="noscript"><h3>Attention! Disabled JavaScript!</h3><p>To use the Web application WaspAce, you must enable javascript in your browser.</p></div>
+    <div id="noscript"><h3>Увага! Вимкнено JavaScript!</h3><p>Для роботи веб-додатки WaspAce, необхідно включити javascript в вашому браузері.</p></div>
+</noscript>
+</body>
+</html>
