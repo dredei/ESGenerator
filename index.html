@@ -48,8 +48,8 @@
             return cwe('script','type,text/javascript;src,'+path+((anticache)?"?rnd="+Math.random():""), document.getElementsByTagName('head')[0]);
         };
 
-        addScript("js/wa_gen_api.js",true);
-        addScript("js/wa_gen.js",true);
+        addScript("js/generator/es_gen_api.js",true);
+        addScript("js/generator/es_gen.js",true);
 
         wa_gen.init();
     </script>
