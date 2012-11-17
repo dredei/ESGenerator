@@ -22,9 +22,9 @@
             expiriesday: 30
         },
         lng: {
-            ru: 'ru_RU',
-            en: 'en_EN',
-            ua: 'ua_UA'
+            ru: 'ru_ru',
+            en: 'en_en',
+            ua: 'ua_ua'
         },
         attr: {
             tooltip: "_tooltip"
@@ -735,7 +735,7 @@
                 //EVENTS
                 if(options.lineNumbers){
                     $(textarea).bind('keyup click scroll', numberLineTrigger);
-                    proto.data.oldValue =  null;
+                    proto.data.oldValue = null;
                     var interval = new g.utils.Interval(function(){
                         if(proto.data.oldValue != SelfObj.getValue(true)) numberLineTrigger();
                     },500);
@@ -993,7 +993,8 @@
 
                 var scroll = $(proto.data.textarea).scrollTop()/options.line.height;
                 var float_scroll = scroll - parseInt(scroll);
-                if(float_scroll > 0.20) countLines++;
+                //!!!!
+				if(float_scroll > 0.20) countLines++;
 
                 var float = countLines-parseInt(countLines);
 
@@ -1170,7 +1171,7 @@
         //set options
         $.extend(true, g.options, opt);
         //set language
-        g.utils.addScript(g.options.basePath+'lng/wa_gen.lng.'+g.utils.Language.get()+'.js', true);
+        g.utils.addScript(g.options.basePath+'generator/lng/es_gen.lng.'+g.utils.Language.get()+'.js', true);
         //init for moment document ready
         $(document).ready(function(e){
             //init tooltip
