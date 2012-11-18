@@ -628,7 +628,7 @@
                 return options.blackList;
             };
             this.getTooltip = function(){
-                return $(proto.htmlNodes.main[0]).attr(g.const.attr.tooltip);;
+                return $(proto.htmlNodes.main[0]).attr(g.const.attr.tooltip);
             };
             this.getValue = function(){
                 return $(proto.data.input).val();
@@ -1161,7 +1161,173 @@
             this.toogle = proto.toogle;
 
             proto.init(opt, param);
-        }
+        },
+		buttonContainer: function(opt, param){
+			var proto = new Proto(),
+				options = proto.options,
+				SelfObj = this,
+				_const = {};
+
+			//options
+			$.extend(true, options, {
+				holder: document.body,
+				buttons: {
+					ok: {
+						enable: false,
+						order: 1,
+						text: "OK",
+						classes: [],
+						click: function(e, button){},
+						hotKey: ["13"],
+						tooltip: ""
+					},
+					apply: {
+						enable: false,
+						order: 2,
+						text: "Apply",
+						classes: [],
+						click: function(e, button){},
+						hotKey: [],
+						tooltip: ""
+					},
+					cancel: {
+						enable: false,
+						order: 3,
+						text: "Cancel",
+						classes: [],
+						click: function(e, button){},
+						hotKey: ["27"],
+						tooltip: ""
+					}
+				}
+			});
+
+			proto.constructor = function(){
+				var buttons = [];
+				$.each(options.buttons, function(key, btn){
+					if(btn.enable) buttons.push($.extend(true, btn, {name: key}));
+				});
+				buttons.sort(function(a,b){
+					return a.order - b.order;
+				});
+				$.each(buttons, function(key, btn){
+					SelfObj.buttons[btn.name] = new button($.extend(true, btn, {holder: options.holder}), {visible: true});
+				});
+			};
+
+			function button(opt, param){
+				var proto = new Proto(),
+					options = proto.options,
+					SelfObj = this,
+					_const = {};
+
+				//options
+				$.extend(true, options, {
+					holder: document.body,
+					text: "",
+					classes: [],
+					click: function(e, button){},
+					hotKey: [],
+					tooltip: ""
+				});
+
+				proto.constructor = function(){
+					var parent = proto.htmlNodes.main[0] = SelfObj.htmlElement = cwe("span","class,button",options.holder);
+
+					//set classes
+					$(parent).addClass(options.classes.join(" "));
+					//set text
+					SelfObj.setText(options.text);
+					//set click
+					$(parent).click(function(e){
+						options.click(e, SelfObj);
+					});
+					//set tooltip
+					SelfObj.setTooltip(options.tooltip);
+					//set hotKey
+					$(window).keydown(function(e){
+							function isInt(string){
+								return (string == parseInt(string).toString());
+							};
+
+						if(SelfObj.state.enableHotKey){
+							var condition = "",
+								symbol_event = "e";
+							$.each(options.hotKey, function(key, value){
+								if(isInt(value)){
+									condition += symbol_event + ".keyCode == " + value + " && ";
+								}else{
+									condition += symbol_event + "." + value + " && ";
+								};
+							});
+							condition = condition.substr(0, condition.length - 4);
+
+							if(condition.length < 1) return;
+
+							if(eval(condition)){
+								$(parent).click();
+							};
+						};
+					});
+				};
+
+				//PROPERTYS
+				this.state = {
+					enableHotKey: true
+				};
+				this.htmlElement = null;
+
+				//METHODS
+				this.setText = function(text){
+					$.extend(true, options, {
+						text: text
+					});
+
+					$(proto.htmlNodes.main[0]).text(options.text);
+				};
+				this.setClick = function(func){
+					$.extend(true, options, {
+						click: func
+					});
+				};
+				this.setTooltip = function(value){
+					$(proto.htmlNodes.main[0]).attr(g.const.attr.tooltip, value);
+				};
+				this.setEnabledHotKey = function(state){
+					SelfObj.state.enableHotKey = (state) ? true : false;
+				};
+				this.getTooltip = function(){
+					return $(proto.htmlNodes.main[0]).attr(g.const.attr.tooltip);
+				};
+				this.getText = function(){
+					return options.text;
+				};
+
+				this.destroy = proto.destroy;
+				this.show = proto.show;
+				this.hide = proto.hide;
+				this.toogle = proto.toogle;
+
+				proto.init(opt, param);
+			};
+
+			//PROPERTYS
+			this.state = {};
+			this.htmlElement = null;
+			this.buttons = {};
+
+			//METHODS
+			this.getButton = function(name){
+				return SelfObj.buttons[name];
+			};
+
+			this.destroy = proto.destroy;
+			this.show = proto.show;
+			this.hide = proto.hide;
+			this.toogle = proto.toogle;
+
+			proto.init(opt, param);
+		}
     };
 
     //forms
@@ -1176,9 +1342,6 @@
         $(document).ready(function(e){
             //init tooltip
             g.data.control.tooltip = new g.controls.tooltip();
-            window.ta = new g.controls.textarea({
-                value: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29]
-            },{visible: true});
         });
     };
 
