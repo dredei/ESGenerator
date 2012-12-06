@@ -899,6 +899,11 @@ body {
     margin: 0 auto;
     width: 600px;
     height: auto;
+    user-select:none;
+    -o-user-select:none;
+    -moz-user-select:none;
+    -khtml-user-select:none;
+    -webkit-user-select:none;
 }
 
 #browsers_box h3 {
