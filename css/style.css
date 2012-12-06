@@ -292,7 +292,8 @@ body {
     list-style-type: none;
 }
 
-.lang ul li {float:left;
+.lang ul li {
+    float: left;
     margin: 0 5px 0 0;
     text-decoration: underline;
     cursor: pointer;
@@ -899,11 +900,11 @@ body {
     margin: 0 auto;
     width: 600px;
     height: auto;
-    user-select:none;
-    -o-user-select:none;
-    -moz-user-select:none;
-    -khtml-user-select:none;
-    -webkit-user-select:none;
+    user-select: none;
+    -o-user-select: none;
+    -moz-user-select: none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
 }
 
 #browsers_box h3 {
@@ -923,7 +924,7 @@ body {
 
 #browsers_box .item {
     text-align: center;
-    width:25%;
+    width: 25%;
 }
 
 #browsers_box .browsers.chrome {
