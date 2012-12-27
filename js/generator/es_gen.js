@@ -11,8 +11,12 @@
         data: {
             control: {
                 tooltip: null
-            }
-        }
+            },
+			form: {
+				main: null
+			}
+        },
+		es: null//data ext source
     };
 
     //constants
@@ -369,7 +373,7 @@
         cwe = g.utils.cwe;
 
     //controls
-    g.controls = {
+    g.control = {
         tooltip: function(opt, param){
             var proto = new Proto(),
                 options = proto.options,
@@ -1327,11 +1331,435 @@
 			this.toogle = proto.toogle;
 
 			proto.init(opt, param);
+		},
+		itemInfo: function(opt, param){
+			var proto = new Proto(),
+				options = proto.options,
+				SelfObj = this,
+				lng = g.lng.control.itemInfo,
+				_const = {};
+
+			//options
+			$.extend(true, options, {
+				holder: document.body,
+				items: [
+					{
+						name: "pages",
+						text: lng.pages,
+						show: true,
+						order: 1
+					},
+					{
+						name: "referers",
+						text: lng.referers,
+						show: true,
+						order: 3
+					},
+					{
+						name: "paths",
+						text: lng.paths,
+						show: true,
+						order: 2
+					},
+					{
+						name: "uaseragents",
+						text: lng.useragents,
+						show: true,
+						order: 4
+					}
+				]
+			});
+
+			proto.constructor = function(){
+				var parent = proto.htmlNodes.main[0] = SelfObj.htmlElement = cwe("div","class,iteminfo",options.holder);
+					var itemName = cwe("div","class,itemname",parent);
+					SelfObj.items["itemName"] = {
+						text: itemName
+					};
+					var info = cwe("table","class,iteminfotable",parent);
+						var infoItemsHolder = cwe("tbody","",info);
+
+				//select and sort items
+				var items = [];
+				$.each(options.items, function(key, val){
+					if(val.show) items.push(val);
+				});
+				items.sort(function(a,b){return a.order- b.order;});
+				//generate items
+				$.each(items, function(key, cfg){
+					if(!SelfObj.items[cfg.name]){
+						var itemParent = cwe("tr","",infoItemsHolder);
+						SelfObj.items[cfg.name] = {
+							text: cwe("td","class,name",itemParent),
+							value: cwe("td","class,value",itemParent)
+						};
+					};
+				});
+				//set all values to 0 and set text
+				var _items = {
+					itemName: {
+						text: lng.itemNoName
+					}
+				};
+				$.each(items, function(key, item){
+					_items[item.name] = {
+						text: item.text,
+						value: 0
+					};
+				});
+				SelfObj.setTextAndValue(_items);
+			};
+
+			//PROPERTYS
+			this.state = {};
+			this.items = {};
+			this.htmlElement = null;
+
+			//METHODS
+			this.setTextAndValue = function(obj){
+				$.each(obj, function(key, data){
+					if(SelfObj.items[key]){
+						if((typeof data.text) != undefined){
+							if(key == "itemName"){
+								if(data.text!= null && data.text.toString().length > 0) $(SelfObj.items[key].text).text(data.text);
+								else $(SelfObj.items[key].text).text(lng.itemNoName);
+							}else{
+								$(SelfObj.items[key].text).text(data.text);
+							};
+						};
+						if(data.value != null) $(SelfObj.items[key].value).text(data.value);
+					};
+				});
+			};
+
+			this.destroy = proto.destroy;
+			this.show = proto.show;
+			this.hide = proto.hide;
+			this.toogle = proto.toogle;
+
+			proto.init(opt, param);
 		}
     };
 
     //forms
-    g.forms = {};
+    g.form = {
+		main: function(opt, param){
+			var proto = new Proto(),
+				options = proto.options,
+				SelfObj = this,
+				lng = g.lng.form.main,
+				_const = {};
+
+			//options
+			$.extend(true, options, {
+				holder: document.body,
+				lng: [
+					{
+						text: lng.lng.ru,
+						"class": "ru",
+						value: g.const.lng.ru,
+						order: 1,
+						enable: true
+					},
+					{
+						text: lng.lng.en,
+						"class": "eng",
+						value: g.const.lng.en,
+						order: 2,
+						enable: false
+					},
+					{
+						text: lng.lng.ua,
+						"class": "ukr",
+						value: g.const.lng.ua,
+						enable: false
+					}
+				]
+			});
+
+			proto.constructor = function(){
+				var parent = SelfObj.htmlElement = proto.htmlNodes.main[0] = cwe("div","id,container",options.holder);
+				//header
+					var header = cwe("div","id,header",parent);
+						var boxWrap_header = cwe("div","class,boxwrap",header);
+							var logo = cwe("div","id,logo",boxWrap_header);
+								var tags = {
+									href: ""
+								};
+								tags[g.const.attr.tooltip] = lng.goToStart;
+								var toStart = cwe("a",tags,logo);
+							cwe("div","class,cleared",boxWrap_header);
+				//main
+					var main = cwe("div","id,main",parent);
+						var content = SelfObj.contentHolder = cwe("div","id,content",cwe("div","class,boxwrap", cwe("div","id,allbox",main)));
+				//footer
+					var footer = cwe("div","id,footer",parent);
+						var boxWrap_footer = cwe("div","class,boxwrap",footer);
+							var lng_list = cwe("ul","", cwe("div","class,lang",boxWrap_footer));
+							//show lng
+							options.lng.sort(function(a,b){return a.order- b.order;});
+							$.each(options.lng, function(key, val){
+								$(cwe("li","class,lng",lng_list))
+									.addClass(val["class"] + ((g.utils.Language.get() == val.value) ? " active" : ""))
+									.text(val.text)
+									.click(function(e){
+										if(val.enable){
+											g.utils.Language.set(val.value);
+											window.location.href = "";
+										}else{
+											alert(lng.localizationIsNotAvailable);
+											return false;
+										};
+									});
+							});
+							$(cwe("div","class,copy",boxWrap_footer)).html("&copy; " + new Date().getFullYear() + " ESGenerator");
+			};
+
+
+			//PROPERTYS
+			this.state = {};
+			this.htmlElement = null;
+			this.contentHolder = null;
+			this.activeForm = null;
+
+			//METHODS
+			this.setActiveForm = function(data){
+				data = $.extend(true, {
+					form: null,
+					callback: function(mainForm){}
+				}, data);
+
+				if(SelfObj.activeForm != null){
+					SelfObj.activeForm.destroy({
+						effect: false,
+						callback: function(){
+							SelfObj.activeForm = data.form(SelfObj.contentHolder);
+							SelfObj.activeForm.show({
+								effect: true,
+								callback: function(){
+									data.callback(SelfObj)
+								}
+							});
+						}
+					});
+				}else{
+					SelfObj.activeForm = data.form(SelfObj.contentHolder);
+					SelfObj.activeForm.show({
+						effect: true,
+						callback: function(){
+							data.callback(SelfObj)
+						}
+					});
+				};
+			};
+
+			this.destroy = proto.destroy;
+			this.show = proto.show;
+			this.hide = proto.hide;
+			this.toogle = proto.toogle;
+
+			proto.init(opt, param);
+		},
+		start: function(opt, param){
+			var proto = new Proto(),
+				options = proto.options,
+				SelfObj = this,
+				lng = g.lng.form.start,
+				_const = {};
+
+			//options
+			$.extend(true, options, {
+				holder: document.body,
+				menuItems: [
+					{
+						title: lng.menuItems.createNew.title,
+						text: lng.menuItems.createNew.text,
+						"class": "new",
+						onClick: function(){
+							g.es = new wa_extSource({},{});
+							g.data.form.main.setActiveForm({
+								form: function(holder){
+									return new g.form.editor({
+										holder: holder
+									},{visible: false});
+								}
+							});
+						},
+						order: 1,
+						enable: true
+					},
+					{
+						title: lng.menuItems.downloadFromUrl.title,
+						text: lng.menuItems.downloadFromUrl.text,
+						"class": "url",
+						onClick: function(){
+							alert(g.lng.other.functionalityIsNotAvailable);
+						},
+						order: 2,
+						enable: true
+					},
+					{
+						title: lng.menuItems.upload.title,
+						text: lng.menuItems.upload.text,
+						"class": "file",
+						onClick: function(){
+							alert(g.lng.other.functionalityIsNotAvailable);
+						},
+						order: 3,
+						enable: true
+					}
+				]
+			});
+
+			proto.constructor = function(){
+				var parent = SelfObj.htmlElement = proto.htmlNodes.main[0] = cwe("div","class,startmenu",options.holder);
+					$(cwe("div","class,text",parent)).html(lng.aboutGenerator);
+
+				//generate menu items
+				options.menuItems.sort(function(a,b){return a.order- b.order;});
+				$.each(options.menuItems, function(key, val){
+					var container = $(cwe("div","class,list",parent)).addClass(val["class"]).click(function(e){
+						val.onClick();
+					});
+					//set title
+					$(cwe("h1","",container)).text(val.title);
+					//set text
+					$(cwe("p","",container)).text(val.text);
+				});
+			};
+
+
+			//PROPERTYS
+			this.state = {};
+			this.htmlElement = null;
+
+			//METHODS
+			this.destroy = proto.destroy;
+			this.show = proto.show;
+			this.hide = proto.hide;
+			this.toogle = proto.toogle;
+
+			proto.init(opt, param);
+		},
+		badBrowser: function(opt, param){
+			var proto = new Proto(),
+				options = proto.options,
+				SelfObj = this,
+				lng = g.lng.form.badBrowser,
+				_const = {};
+
+			//options
+			$.extend(true, options, {
+				holder: document.body,
+				items: [
+					{
+						text: lng.items.chrome.text,
+						"class": "chrome",
+						url: "https://www.google.com/chrome/",
+						show: true,
+						order: 1
+					},
+					{
+						text: lng.items.firefox.text,
+						"class": "firefox",
+						url: "http://www.mozilla.org",
+						show: true,
+						order: 2
+					},
+					{
+						text: lng.items.opera.text,
+						"class": "opera",
+						url: "http://opera.com",
+						show: true,
+						order: 3
+					},
+					{
+						text: lng.items.safari.text,
+						"class": "safari",
+						url: "http://www.apple.com/safari/download/",
+						show: true,
+						order: 4
+					}
+				]
+			});
+
+			proto.constructor = function(){
+				var parent = SelfObj.htmlElement = proto.htmlNodes.main[0] = cwe("table","id,browsers_box",options.holder);
+				var textHolder = cwe("td", "colspan,4", cwe("tr", "", cwe("thead","",parent)));
+					$(cwe("h3","",textHolder)).text(lng.textTitle);
+					$(cwe("div","",textHolder)).text(lng.text);
+				var itemsHolder = cwe("tr", "", cwe("tbody","",parent));
+
+				//select & sort items
+				var items = [];
+				$.each(options.items, function(key, val){
+					if(val.show) items.push(val);
+				});
+				items.sort(function(a,b){
+					return a.order- b.order;
+				});
+				//generate items
+				$.each(items, function(key, cfg){
+					var item = cwe("td","class,item",itemsHolder);
+					$(cwe("div","class,browsers",item)).addClass(cfg["class"]);
+					$(cwe("a",{
+						target: "_blank",
+						href: cfg.url
+					},item)).text(cfg.text);
+				});
+			};
+
+
+			//PROPERTYS
+			this.state = {};
+			this.htmlElement = null;
+
+			//METHODS
+			this.destroy = proto.destroy;
+			this.show = proto.show;
+			this.hide = proto.hide;
+			this.toogle = proto.toogle;
+
+			proto.init(opt, param);
+		},
+		editor: function(opt, param){
+			var proto = new Proto(),
+				options = proto.options,
+				SelfObj = this,
+				lng = g.lng.form.editor,
+				_const = {};
+
+			//options
+			$.extend(true, options, {
+				holder: document.body
+			});
+
+			proto.constructor = function(){
+				var parent = SelfObj.htmlElement = proto.htmlNodes.main[0] = cwe("div","id,editor",options.holder);
+					var left = cwe("div","class,left",parent);
+					var right = cwe("div","class,right",parent);
+
+				//set left
+				SelfObj.itemInfo = new g.control.itemInfo({
+					holder: left
+				},{visible: false});
+			};
+
+
+			//PROPERTYS
+			this.state = {};
+			this.itemInfo = null;
+			this.htmlElement = null;
+
+			//METHODS
+			this.destroy = proto.destroy;
+			this.show = proto.show;
+			this.hide = proto.hide;
+			this.toogle = proto.toogle;
+
+			proto.init(opt, param);
+		}
+	};
 
     g.init = function(opt){
         //set options
@@ -1340,8 +1768,18 @@
         g.utils.addScript(g.options.basePath+'generator/lng/es_gen.lng.'+g.utils.Language.get()+'.js', true);
         //init for moment document ready
         $(document).ready(function(e){
-            //init tooltip
-            g.data.control.tooltip = new g.controls.tooltip();
+			//init tooltip
+			g.data.control.tooltip = new g.control.tooltip();
+			//init main form
+			g.data.form.main = new g.form.main({},{visible: true});
+			//init start form OR init badBrowser form
+			g.data.form.main.setActiveForm({
+				form: function(holder){
+					return new g.form[(($.browser.msie) ? "badBrowser" : "start")]({
+						holder: holder
+					},{visible: false});
+				}
+			});
         });
     };
 

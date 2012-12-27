@@ -3,7 +3,9 @@
         var SelfObj = this;
 
         //options
-        var opts = $.extend(true, {}, options);
+        var opts = $.extend(true, {
+			onChange: function(extSource){}
+		}, options);
         //External Source Constant
         var constants = {
             items: "Items",
@@ -22,12 +24,8 @@
             exMask: "ExMask",
 
             //const for generator info
-            genInfo: {
-                blockName: "generator info",
-                name: "wa_name",
-                dateCreate: "date create",
-                dateEditLast: "date edit last"
-            }
+            projectName: "ProjectName",
+			name: ""
         };
         //Data External Source
         var dataExtSource = {};
@@ -42,8 +40,15 @@
             });
         };
         this.setReport = function(report){
-            dataExtSource[constants.report] = report;
+			var data = {};
+			data[constants.report] = report;
+			SelfObj.set(data);
         };
+		this.setProjectName = function(name){
+			var data = {};
+			data[constants.projectName] = name;
+			SelfObj.set(data);
+		};
         this.get = function(param){
             if(param){
                 return dataExtSource[param];
@@ -51,11 +56,22 @@
                 return dataExtSource;
             };
         };
+		this.getProjectName = function(){
+			return SelfObj.get(constants.projectName);
+		};
         this.getReport = function(){
-            return dataExtSource[constants.report];
+			return SelfObj.get(constants.report);
         };
+		this.getItems = function(){
+			return SelfObj.get(constants.items);
+		};
         this.getJSON = function(){
             var out = {};
+
+			//set Project Name
+			if(SelfObj.getProjectName()){
+				out[constants.projectName] = SelfObj.getProjectName();
+			};
 
             //set report
             if(SelfObj.getReport()) out[constants.report] = SelfObj.getReport();
@@ -139,7 +155,7 @@
             return $.toJSON(out);
         };
         this.addItem = function(){
-            SelfObj.get(constants.items).add();
+            SelfObj.getItems().add();
         };
 
         //other objects
@@ -167,15 +183,19 @@
                 });
             };
             this.setPage = function(page){
-                data[constants.page] = page;
+				var data = {};
+				data[constants.page] = page;
+				SelfObj.set(data);
             };
             this.setPriority = function(priority){
-                data[constants.priority] = priority;
+				var data = {};
+				data[constants.priority] = priority;
+				SelfObj.set(data);
             };
 
             //INIT
             var def_obj = {};
-           def_obj[constants.priority] = 0;
+           def_obj[constants.priority] = 1;
             _data = $.extend(true, def_obj, _data);
             SelfObj.set(_data);
         };
@@ -194,8 +214,8 @@
             this.get = function(){
                 return data;
             };
-            this.set = function(obj){
-                if(obj) $.each(obj, function(key, value){
+            this.set = function(arr){
+                if(arr) $.each(arr, function(key, value){
                     SelfObj.add(value);
                 });
             };
@@ -265,7 +285,7 @@
                 };
             };
             this.getPriority = function(){
-                return data[constants.priority];
+                return SelfObj.get(constants.priority);
             };
             this.set = function(obj){
                 if(obj) $.each(obj, function(key, value){
@@ -277,12 +297,14 @@
                 });
             };
             this.setPriority = function(priority){
-                data[constants.priority] = priority;
+				var data = {};
+				data[constants.priority] = priority;
+				SelfObj.set(data);
             };
 
             //INIT
             var def_obj = {};
-            def_obj[constants.priority] = 0;
+            def_obj[constants.priority] = 1;
             _data = $.extend(true, def_obj, _data);
             SelfObj.set(_data);
         };
@@ -301,8 +323,8 @@
             this.get = function(){
                 return data;
             };
-            this.set = function(obj){
-                if(obj) $.each(obj, function(key, value){
+            this.set = function(arr){
+                if(arr) $.each(arr, function(key, value){
                     SelfObj.add(value);
                 });
             };
@@ -326,10 +348,10 @@
                 };
             };
             this.getReferer = function(){
-                return data[constants.referer];
+                return SelfObj.get(constants.referer);
             };
             this.getPriority = function(){
-                return data[constants.priority];
+                return SelfObj.get(constants.priority);
             };
             this.set = function(obj){
                 if(obj) $.each(obj, function(key, value){
@@ -337,15 +359,19 @@
                 });
             };
             this.setReferer = function(referer){
-                data[constants.referer] = referer;
+				var data = {};
+				data[constants.referer] = referer;
+				SelfObj.set(data);
             };
             this.setPriority = function(priority){
-                data[constants.priority] = priority;
+				var data = {};
+				data[constants.priority] = priority;
+				SelfObj.set(data);
             };
 
             //INIT
             var def_obj = {};
-            def_obj[constants.priority] = 0;
+            def_obj[constants.priority] = 1;
             _data = $.extend(true, def_obj, _data);
             SelfObj.set(_data);
         };
@@ -364,8 +390,8 @@
             this.get = function(){
                 return data;
             };
-            this.set = function(obj){
-                if(obj) $.each(obj, function(key, value){
+            this.set = function(arr){
+                if(arr) $.each(arr, function(key, value){
                     SelfObj.add(value);
                 });
             };
@@ -389,10 +415,10 @@
                 };
             };
             this.getUserAgent = function(){
-                return data[constants.userAgent];
+                return SelfObj.get(constants.userAgent);
             };
             this.getPriority = function(){
-                return data[constants.priority];
+                return SelfObj.get(constants.priority);
             };
             this.set = function(obj){
                 if(obj) $.each(obj, function(key, value){
@@ -400,15 +426,19 @@
                 });
             };
             this.setUserAgent = function(userAgent){
-                data[constants.userAgent] = userAgent;
+				var data = {};
+				data[constants.userAgent] = userAgent;
+				SelfObj.set(data);
             };
             this.setPriority = function(priority){
-                data[constants.priority] = priority;
+				var data = {};
+				data[constants.priority] = priority;
+				SelfObj.set(data);
             };
 
             //INIT
             var def_obj = {};
-            def_obj[constants.priority] = 0;
+            def_obj[constants.priority] = 1;
             _data = $.extend(true, def_obj, _data);
             SelfObj.set(_data);
         };
@@ -427,8 +457,8 @@
             this.get = function(){
                 return data;
             };
-            this.set = function(obj){
-                if(obj) $.each(obj, function(key, value){
+            this.set = function(arr){
+                if(arr) $.each(arr, function(key, value){
                     SelfObj.add(value);
                 });
             };
@@ -452,7 +482,7 @@
                 };
             };
             this.getExMask = function(){
-                return data[constants.exMask];
+                return SelfObj.get(constants.exMask);
             };
             this.set = function(obj){
                 if(obj) $.each(obj, function(key, value){
@@ -460,7 +490,9 @@
                 });
             };
             this.setExMask = function(exMask){
-                data[constants.exMask] = exMask;
+				var data = {};
+				data[constants.exMask] = exMask;
+				SelfObj.set(data);
             };
 
             //INIT
@@ -506,22 +538,22 @@
                 };
             };
             this.getPages = function(){
-                return data[constants.pages];
+                return SelfObj.get(constants.pages);
             };
             this.getPaths = function(){
-                return data[constants.paths];
+                return SelfObj.get(constants.paths);
             };
             this.getReferers = function(){
-                return data[constants.referers];
+                return SelfObj.get(constants.referers);
             };
             this.getUserAgents = function(){
-                return data[constants.userAgents];
+                return SelfObj.get(constants.userAgents);
             };
             this.getPriority = function(){
-                return data[constants.priority];
+                return SelfObj.get(constants.priority);
             };
             this.getName = function(){
-                return SelfObj.get(constants.genInfo.name);
+                return SelfObj.get(constants.name);
             };
             this.set = function(obj){
                 if(obj) $.each(obj, function(key, value){
@@ -544,10 +576,14 @@
                 });
             };
             this.setPriority = function(priority){
-                data[constants.priority] = priority;
+				var data = {};
+				data[constants.priority] = priority;
+				SelfObj.set(data);
             };
             this.setName = function(name){
-                data[constants.genInfo.name] = name;
+				var data = {};
+				data[constants.name] = name;
+				SelfObj.set(data);
             };
 
             //INIT
@@ -556,7 +592,7 @@
             stand_obj[constants.paths] = null;
             stand_obj[constants.referers] = null;
             stand_obj[constants.userAgents] = null;
-            stand_obj[constants.priority] = 0;
+            stand_obj[constants.priority] = 1;
             _data = $.extend(true, stand_obj, _data);
             SelfObj.set(_data);
         };
