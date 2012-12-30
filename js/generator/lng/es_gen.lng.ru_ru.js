@@ -45,7 +45,40 @@ wa_gen.lng = {
 			}
 		},
 		editor: {
-
+			leftMenu: {
+				setElemets: "Наборы эллементов",
+				exMasks: "Исключающие маски",
+				adressReport: "Адрес отчетов"
+			},
+			form: {
+				setElements: {
+					listOption: {
+						priority: {
+							text: "Приоритет",
+							tooltip: ""
+						},
+						"delete": {
+							text: "Удалить",
+							tooltip: ""
+						},
+						add: {
+							text: "Добавить",
+							tooltip: ""
+						}
+					},
+					listTable: {
+						name: {
+							text: "Имя эллемента"
+						},
+						priority: {
+							text: "Приоритет"
+						},
+						option: {
+							text: "Опции"
+						}
+					}
+				}
+			}
 		}
 	},
 	control: {

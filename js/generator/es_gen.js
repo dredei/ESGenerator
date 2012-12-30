@@ -1438,6 +1438,182 @@
 			this.toogle = proto.toogle;
 
 			proto.init(opt, param);
+		},
+		list: function(opt, param){
+			var proto = new Proto(),
+				options = proto.options,
+				SelfObj = this,
+				_const = {};
+
+			//options
+			$.extend(true, options, {
+				holder: document.body,
+				"classes": [],
+				text: "",
+				tooltip: "",
+				onClick: function(list){}
+			});
+
+			proto.constructor = function(){
+				var parent = proto.htmlNodes.main[0] = SelfObj.htmlElement = cwe("span","class,list",options.holder);
+				//add other classes
+				$(parent).addClass(options["classes"].join(" "));
+				//set tooltip
+				SelfObj.setTooltip(options.tooltip);
+				//set text
+				SelfObj.setText(options.text);
+				//set onClick handler
+				$(parent).click(function(e){
+					options.onClick(SelfObj);
+				});
+			};
+
+			//PROPERTYS
+			this.state = {};
+			this.htmlElement = null;
+
+			//METHODS
+			this.setTooltip = function(tooltip){
+				$.extend(true, options, {
+					tooltip: tooltip
+				});
+
+				$(SelfObj.htmlElement).attr(g.const.attr.tooltip, options.tooltip);
+			};
+			this.setText = function(text){
+				$.extend(true, options, {
+					text: text
+				});
+
+				$(SelfObj.htmlElement).text(options.text);
+			};
+			this.setOnClick = function(onClick){
+				$.extend(true, options, {
+					onClick: onClick
+				});
+			};
+
+			this.destroy = proto.destroy;
+			this.show = proto.show;
+			this.hide = proto.hide;
+			this.toogle = proto.toogle;
+
+			proto.init(opt, param);
+		},
+		button: function(opt, param){
+			var proto = new Proto(),
+				options = proto.options,
+				SelfObj = this,
+				_const = {};
+
+			//options
+			$.extend(true, options, {
+				holder: document.body,
+				"classes": [],
+				text: "",
+				tooltip: "",
+				onClick: function(button){}
+			});
+
+			proto.constructor = function(){
+				var parent = proto.htmlNodes.main[0] = SelfObj.htmlElement = cwe("span","class,button",options.holder);
+				//add other classes
+				$(parent).addClass(options["classes"].join(" "));
+				//set tooltip
+				SelfObj.setTooltip(options.tooltip);
+				//set text
+				SelfObj.setText(options.text);
+				//set onClick handler
+				$(parent).click(function(e){
+					options.onClick(SelfObj);
+				});
+			};
+
+			//PROPERTYS
+			this.state = {};
+			this.htmlElement = null;
+
+			//METHODS
+			this.setTooltip = function(tooltip){
+				$.extend(true, options, {
+					tooltip: tooltip
+				});
+
+				$(SelfObj.htmlElement).attr(g.const.attr.tooltip, options.tooltip);
+			};
+			this.setText = function(text){
+				$.extend(true, options, {
+					text: text
+				});
+
+				$(SelfObj.htmlElement).text(options.text);
+			};
+			this.setOnClick = function(onClick){
+				$.extend(true, options, {
+					onClick: onClick
+				});
+			};
+
+			this.destroy = proto.destroy;
+			this.show = proto.show;
+			this.hide = proto.hide;
+			this.toogle = proto.toogle;
+
+			proto.init(opt, param);
+		},
+		icon: function(opt, param){
+			var proto = new Proto(),
+				options = proto.options,
+				SelfObj = this,
+				_const = {};
+
+			//options
+			$.extend(true, options, {
+				holder: document.body,
+				iconSize: 32,
+				"classes": [],
+				tooltip: "",
+				onClick: function(list){}
+			});
+
+			proto.constructor = function(){
+				var parent = proto.htmlNodes.main[0] = SelfObj.htmlElement = cwe("span",{
+					"class": "iconset" + ((options.iconSize == 16) ? "16" : "")
+				},options.holder);
+				//add other classes
+				$(parent).addClass(options["classes"].join(" "));
+				//set tooltip
+				SelfObj.setTooltip(options.tooltip);
+				//set onClick handler
+				$(parent).click(function(e){
+					options.onClick(SelfObj);
+				});
+			};
+
+			//PROPERTYS
+			this.state = {};
+			this.htmlElement = null;
+
+			//METHODS
+			this.setTooltip = function(tooltip){
+				$.extend(true, options, {
+					tooltip: tooltip
+				});
+
+				$(SelfObj.htmlElement).attr(g.const.attr.tooltip, options.tooltip);
+			};
+			this.setOnClick = function(onClick){
+				$.extend(true, options, {
+					onClick: onClick
+				});
+			};
+
+			this.destroy = proto.destroy;
+			this.show = proto.show;
+			this.hide = proto.hide;
+			this.toogle = proto.toogle;
+
+			proto.init(opt, param);
 		}
     };
 
@@ -1727,7 +1903,15 @@
 				options = proto.options,
 				SelfObj = this,
 				lng = g.lng.form.editor,
-				_const = {};
+				_const = {
+					leftMenu: {
+						item: {
+							"class": {
+								active: "active"
+							}
+						}
+					}
+				};
 
 			//options
 			$.extend(true, options, {
@@ -1737,21 +1921,201 @@
 			proto.constructor = function(){
 				var parent = SelfObj.htmlElement = proto.htmlNodes.main[0] = cwe("div","id,editor",options.holder);
 					var left = cwe("div","class,left",parent);
-					var right = cwe("div","class,right",parent);
+					var right = proto.data.right = cwe("div","class,right",parent);
 
 				//set left
+				////item info
 				SelfObj.itemInfo = new g.control.itemInfo({
 					holder: left
 				},{visible: false});
+				////menu
+				var leftMenu = cwe("div","class,menu",left);
+				//////set elements
+				SelfObj.items.left.leftMenu.setElemets = new g.control.list({
+					holder: leftMenu,
+					text: lng.leftMenu.setElemets,
+					onClick: function(list){
+						leftMenu_setActiveItem(list);
+
+						//set form
+						SelfObj.setActiveForm({
+							form: function(holder){
+								return new form_setElements({holder: holder}, {visible: false});
+							}
+						});
+					}
+				},{visible: true});
+				//////ex masks
+				SelfObj.items.left.leftMenu.exMasks = new g.control.list({
+					holder: leftMenu,
+					text: lng.leftMenu.exMasks,
+					onClick: function(list){
+						leftMenu_setActiveItem(list);
+					}
+				},{visible: true});
+				//////adress report
+				SelfObj.items.left.leftMenu.adressReport = new g.control.list({
+					holder: leftMenu,
+					text: lng.leftMenu.adressReport,
+					onClick: function(list){
+						leftMenu_setActiveItem(list);
+					}
+				},{visible: true});
+				////menu functions
+				////// function set active
+				function leftMenu_setActiveItem(item){
+					$.each(SelfObj.items.left.leftMenu, function(key, menuItem){
+						//set not active
+						$(menuItem.htmlElement).removeClass(_const.leftMenu.item["class"].active);
+
+						//set active
+						if(menuItem == item) $(menuItem.htmlElement).addClass(_const.leftMenu.item["class"].active);
+					});
+				};
+
+				//run default action
+				$(SelfObj.items.left.leftMenu.setElemets.htmlElement).click();
 			};
 
+			//right forms
+			function form_setElements(opt, param){
+				var proto = new Proto(),
+					options = proto.options,
+					SelfObj = this,
+					lng = g.lng.form.editor.form.setElements,
+					_const = {};
+
+				//options
+				$.extend(true, options, {
+					holder: document.body
+				});
+
+				proto.constructor = function(){
+					var parent = SelfObj.htmlElement = proto.htmlNodes.main[0] = cwe("div","class,itemarea",options.holder);
+					proto.htmlNodes.main[1] = cwe("div","class,cleared",options.holder);
+						var listOption = cwe("div","class,listoption",parent);
+							var list_priority = new g.control.list({
+								holder: listOption,
+								text: lng.listOption.priority.text,
+								classes: ["priority"],
+								onClick: function(list){
+									alert("priority");
+								}
+							},{visible: true});
+							var list_delete = new g.control.list({
+								holder: listOption,
+								text: lng.listOption["delete"].text,
+								classes: ["delete"],
+								onClick: function(list){
+									alert("delete");
+								}
+							},{visible: true});
+							var btn_add = new g.control.button({
+								holder: listOption,
+								text: lng.listOption.add.text,
+								classes: ["add"],
+								onClick: function(list){
+									alert("add");
+								}
+							},{visible: true});
+
+						var listArea = cwe("div","class,listarea",parent);
+							var listTable = cwe("table","class,listtable",listArea);
+								var listTable_header = cwe("tr","",cwe("thead","",listTable));
+									var checkBox = cwe("input","type,checkbox",cwe("td","class,checkbx",listTable_header));
+									$(cwe("td","class,name",listTable_header)).text(lng.listTable.name.text);
+									$(cwe("td","class,priority",listTable_header)).text(lng.listTable.priority.text);
+									$(cwe("td","class,option",listTable_header)).text(lng.listTable.option.text);
+								var listTable_body = proto.data.itemHolder = cwe("tbody","",listTable);
+				};
+
+				function Item(opt, param){
+					var proto = new Proto(),
+						options = proto.options,
+						SelfObj = this,
+						lng = g.lng.form.editor.form.setElements,
+						_const = {};
+
+					//options
+					$.extend(true, options, {
+						holder: document.body,
+						element: null
+					});
+
+					proto.constructor = function(){
+						var parent = SelfObj.htmlElement = proto.htmlNodes.main[0] = cwe("tr","",options.holder);
+					};
+
+					//PROPERTYS
+					this.state = {};
+					this.htmlElement = null;
+
+					//METHODS
+					this.destroy = proto.destroy;
+					this.show = proto.show;
+					this.hide = proto.hide;
+					this.toogle = proto.toogle;
+
+					proto.init(opt, param);
+				};
+
+				//PROPERTYS
+				this.state = {};
+				this.htmlElement = null;
+				this.items = {};
+
+				//METHODS
+				this.destroy = proto.destroy;
+				this.show = proto.show;
+				this.hide = proto.hide;
+				this.toogle = proto.toogle;
+
+				proto.init(opt, param);
+			};
 
 			//PROPERTYS
 			this.state = {};
 			this.itemInfo = null;
 			this.htmlElement = null;
+			this.items = {
+				left: {
+					leftMenu: {}
+				},
+				right: {
+					form: {
+						active: null
+					}
+				}
+			};
 
 			//METHODS
+			this.setActiveForm = function(obj){
+				var data = $.extend(true, {
+					form: function(holder){
+						return null;
+					},
+					callback: function(){}
+				}, obj);
+
+				if(SelfObj.items.right.form.active != null){
+					SelfObj.items.right.form.active.destroy({
+						callback: function(){
+							SelfObj.items.right.form.active = data.form(proto.data.right);
+							SelfObj.items.right.form.active.show({
+								effect: true,
+								callback: data.callback
+							});
+						}
+					});
+				}else{
+					SelfObj.items.right.form.active = data.form(proto.data.right);
+					SelfObj.items.right.form.active.show({
+						effect: true,
+						callback: data.callback
+					});
+				};
+			};
+
 			this.destroy = proto.destroy;
 			this.show = proto.show;
 			this.hide = proto.hide;
