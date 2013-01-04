@@ -705,9 +705,9 @@ ul.areaset li {
     font-weight: bold;
     line-height: 24px;
     cursor: move;
-    -webkit-transition: all 0.17s ease;
-    -moz-transition: all 0.17s ease;
     -o-transition: all 0.17s ease;
+    -moz-transition: all 0.17s ease;
+    -webkit-transition: all 0.17s ease;
     -khtml-transition: all 0.17s ease;
 }
 
