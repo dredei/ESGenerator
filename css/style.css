@@ -860,7 +860,7 @@ ul.areaset li {
     position: relative;
     float: left;
     display: inline-block;
-    padding: .1em 0;
+    padding: .5em 0;
     width: 50px;
     height: 150px;
     min-height: 150px;
