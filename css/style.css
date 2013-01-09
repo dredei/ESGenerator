@@ -603,6 +603,7 @@ body {
 }
 
 .button, input[type="file"] {
+    position: relative;
     display: inline-block;
     margin: 5px;
     padding: 0 15px;
@@ -654,7 +655,6 @@ body {
 }
 
 .button.file {
-    position: relative;
     background-color: #0162ac;
 }
 
