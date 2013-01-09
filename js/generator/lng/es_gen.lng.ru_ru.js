@@ -51,6 +51,7 @@ wa_gen.lng = {
 				adressReport: "Адрес отчетов"
 			},
 			form: {
+				messageBox: {},
 				setElements: {
 					listOption: {
 						priority: {
@@ -74,8 +75,195 @@ wa_gen.lng = {
 							text: "Приоритет"
 						},
 						option: {
-							text: "Опции"
+							text: "Опции",
+							icons: {
+								edit: {
+									tooltip: "Переименовать"
+								},
+								priority: {
+									tooltip: "Изменить приоритет"
+								},
+								"delete": {
+									tooltip: "Удалить"
+								}
+							}
 						}
+					},
+					unnamed: "Безымянный",
+					msg: {
+						add: {
+							title: "Новый набор эллементов",
+							text: "Введите имя нового набора"
+						},
+						rename: {
+							title: "Переименование набора эллементов",
+							text: "Введите новое имя набора"
+						},
+						setPriority: {
+							title: "Изменение приоритета",
+							text: "Введите желаемый приоритет эллемента.<br/>Это должно быть число от 0 до 999 999 999.",
+							error: "Был неверенно введен приоритет эллемента.<br/>Число должно быть в промежутке от 0 до 999 999 999."
+						},
+						removeItem: {
+							title: "Удаление эллемента",
+							text: "Вы действительно хотите удалить эллемент?"
+						},
+						removeItems: {
+							title: "Удаление эллементов",
+							text: "Вы действительно хотите удалить выделенные эллементы?"
+						}
+					}
+				},
+				exMasks: {
+					listOption: {
+						"delete": {
+							text: "Удалить",
+							tooltip: ""
+						},
+						add: {
+							text: "Добавить",
+							tooltip: ""
+						}
+					},
+					listTable: {
+						name: {
+							text: "Маска"
+						},
+						option: {
+							text: "Опции",
+							icons: {
+								edit: {
+									tooltip: "Изменить"
+								},
+								"delete": {
+									tooltip: "Удалить"
+								}
+							}
+						}
+					},
+					msg: {
+						add: {
+							title: "Новая исключающая маска",
+							text: "Введите исключающую маску",
+							error: "Вы не заполнили поле с маской."
+						},
+						edit: {
+							title: "Изменение исключающей маски",
+							text: "Введите желаемаю исключающую маску",
+							error: "Вы не заполнили поле с маской."
+						},
+						removeItem: {
+							title: "Удаление эллемента",
+							text: "Вы действительно хотите удалить маску?"
+						},
+						removeItems: {
+							title: "Удаление эллементов",
+							text: "Вы действительно хотите удалить выделенные маски?"
+						}
+					}
+				},
+				report: {
+					listOption: {
+						"delete": {
+							text: "Удалить",
+							tooltip: ""
+						},
+						add: {
+							text: "Добавить",
+							tooltip: ""
+						}
+					},
+					listTable: {
+						name: {
+							text: "Адресс"
+						},
+						option: {
+							text: "Опции",
+							icons: {
+								edit: {
+									tooltip: "Изменить"
+								},
+								"delete": {
+									tooltip: "Удалить"
+								}
+							}
+						}
+					},
+					msg: {
+						canNotAdd: {
+							title: "Ошибка",
+							text: "Вы не можете добавить больше одного адреса отчета."
+						},
+						add: {
+							title: "Новая URL отчетов",
+							text: "Введите необходимый URL для отправки отчетов",
+							error: "Вы не заполнили поле URL отчетов."
+						},
+						edit: {
+							title: "Редактирование URL отчетов",
+							text: "Введите необходимый URL для отправки отчетов",
+							error: "Вы не заполнили поле URL отчетов."
+						},
+						removeItem: {
+							title: "Удаление эллемента",
+							text: "Вы действительно хотите удалить URL отчетов?"
+						}
+					}
+				}
+			}
+		},
+		messageBox: {
+			info: {
+				buttons: {
+					ok: {
+						text: "ОК"
+					}
+				}
+			},
+			error: {
+				buttons: {
+					ok: {
+						text: "ОК"
+					}
+				}
+			},
+			confirm: {
+				buttons: {
+					ok: {
+						text: "ОК"
+					},
+					cancel: {
+						text: "Отмена"
+					}
+				}
+			},
+			input: {
+				buttons: {
+					ok: {
+						text: "ОК"
+					},
+					cancel: {
+						text: "Отмена"
+					}
+				}
+			},
+			textarea: {
+				buttons: {
+					ok: {
+						text: "ОК"
+					},
+					cancel: {
+						text: "Отмена"
+					}
+				}
+			},
+			number: {
+				buttons: {
+					ok: {
+						text: "ОК"
+					},
+					cancel: {
+						text: "Отмена"
 					}
 				}
 			}

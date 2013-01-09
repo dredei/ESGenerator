@@ -32,7 +32,28 @@
         },
         attr: {
             tooltip: "_tooltip"
-        }
+        },
+		form: {
+			messageBox: {
+				type: {
+					info: "info",
+					error: "error",
+					confirm: "confirm",
+					input: "input",
+					textarea: "textarea",
+					number: "number"
+				}
+			}
+		},
+		control: {
+			textline: {
+				type: {
+					text: "text",
+					password: "password",
+					number: "number"
+				}
+			}
+		}
     };
 
     //utils
@@ -214,7 +235,24 @@
             formatString = formatString.replace(/s/i, s);
 
             return formatString;
-        }
+        },
+		onChangeSize: function(element, action){
+			var oldSize = {
+				width: $(element).width(),
+				height: $(element).height()
+			};
+
+			this.timer = new g.utils.Interval(function(){
+				if($(element).width() != oldSize.width || $(element).height() != oldSize.height){
+					oldSize = {
+						width: $(element).width(),
+						height: $(element).height()
+					};
+					action(element);
+				};
+			}, 300);
+			this.timer.start();
+		}
     };
 
     var Proto = function(){
@@ -428,7 +466,7 @@
             function tooltip_hide(e){
                 var element = this;
                 $(element).attr(_const.attr.state, false);
-                SelfObj.hide({effect: true});
+                SelfObj.hide({effect: false});
             };
             function set_position(element, e, margin){
                 var window_temp = {
@@ -514,7 +552,8 @@
                 _const = {
                     type: {
                         text: "text",
-                        password: "password"
+                        password: "password",
+						number: "number"
                     }
                 };
 
@@ -527,9 +566,13 @@
                 type: _const.type.text,
                 minLength: 0,
                 maxLength: 0,
+				step: 1,
+				min: -999999999,
+				max: 999999999,
                 regexp: /^.*$/,
                 "class": {
-                    error: "error"
+                    error: "error",
+					range: "range"
                 },
                 checkData: false,
                 onError: function(SelfObj, options){},
@@ -553,11 +596,70 @@
                     case _const.type.password:
                         type = "password";
                         break;
+					case _const.type.number:
+						type = "text";
+						break;
                 };
                 var input = proto.data.input = cwe("input",{
                     type: type,
                     placeholder: options.placeholder
                 },parent);
+
+				if(options.type == _const.type.number){
+					$.extend(true, options, {
+						regexp: /^\-?\d*$/,
+						checkData: true,
+						userCheckDataError: function(textline){
+							var value = ((parseInt(textline.getValue())) ? parseInt(textline.getValue()) : 0);
+
+							if(value < options.min || value > options.max) return {state: true, callback: function(){}};
+							else return {state: false, callback: function(){}};
+						}
+					});
+					$(parent).addClass(options["class"].range);
+					var rangeBox = cwe("span","class,rangebox",parent);
+					var range_up = cwe("b","class,range top",rangeBox);
+					var range_down = cwe("b","class,range bottom",rangeBox);
+
+					//set events rangeBox
+					var downing_up = false,
+						downing_down = false,
+						timeDelay = 1000,
+						periodChange = 75,
+						interval_up = new g.utils.Interval(function(){
+							if(downing_up) SelfObj.plus();
+							else interval_up.stop();
+						},periodChange),
+						interval_down = new g.utils.Interval(function(){
+							if(downing_down) SelfObj.minus();
+							else interval_down.stop();
+						},periodChange);
+					$(range_up).mousedown(function(){
+						$(window).disableSelection();
+						downing_up = true;
+
+						setTimeout(function(){
+							if(downing_up) interval_up.start();
+						},timeDelay);
+					});
+					$(range_down).mousedown(function(){
+						$(window).disableSelection();
+						downing_down = true;
+
+						setTimeout(function(){
+							if(downing_down) interval_down.start();
+						},timeDelay);
+					});
+					$(window).mouseup(function(){
+						$(window).enableSelection();
+						downing_up = false;
+						downing_down = false;
+						if(interval_up) interval_up.stop();
+						if(interval_down) interval_down.stop();
+					});
+					$(range_up).click(SelfObj.plus);
+					$(range_down).click(SelfObj.minus);
+				};
 
                 //set value
                 SelfObj.setValue(options.value);
@@ -671,6 +773,22 @@
             this.clear = function(){
                 $(proto.data.input).val("");
             };
+			this.plus = function(){
+				var value = ((parseInt(SelfObj.getValue())) ? parseInt(SelfObj.getValue()) : options.min),
+					new_value = ((value+options.step > options.max) ? options.max : value+options.step);
+
+				SelfObj.setValue(
+					(new_value < options.min ? options.min : new_value)
+				);
+			};
+			this.minus = function(){
+				var value = ((parseInt(SelfObj.getValue())) ? parseInt(SelfObj.getValue()) : options.min+options.step),
+					new_value = ((value-options.step < options.min) ? options.min : value-options.step);
+
+				SelfObj.setValue(
+					(new_value > options.max ? options.max : new_value)
+				);
+			};
 
             this.destroy = proto.destroy;
             this.show = proto.show;
@@ -1306,6 +1424,9 @@
 				this.getText = function(){
 					return options.text;
 				};
+				this.click = function(){
+					$(SelfObj.htmlElement).click();
+				};
 
 				this.destroy = proto.destroy;
 				this.show = proto.show;
@@ -1323,6 +1444,11 @@
 			//METHODS
 			this.getButton = function(name){
 				return SelfObj.buttons[name];
+			};
+			this.setEnabledHotKey = function(state){
+				$.each(SelfObj.buttons, function(key, btn){
+					btn.setEnabledHotKey(state);
+				});
 			};
 
 			this.destroy = proto.destroy;
@@ -1578,7 +1704,7 @@
 
 			proto.constructor = function(){
 				var parent = proto.htmlNodes.main[0] = SelfObj.htmlElement = cwe("span",{
-					"class": "iconset" + ((options.iconSize == 16) ? "16" : "")
+					"class": "iconset" + ((options.iconSize == 16) ? " x16" : "")
 				},options.holder);
 				//add other classes
 				$(parent).addClass(options["classes"].join(" "));
@@ -1586,6 +1712,7 @@
 				SelfObj.setTooltip(options.tooltip);
 				//set onClick handler
 				$(parent).click(function(e){
+					e.stopPropagation();
 					options.onClick(SelfObj);
 				});
 			};
@@ -1607,8 +1734,188 @@
 					onClick: onClick
 				});
 			};
+			this.click = function(){
+				$(SelfObj.htmlElement).click();
+			};
 
 			this.destroy = proto.destroy;
+			this.show = proto.show;
+			this.hide = proto.hide;
+			this.toogle = proto.toogle;
+
+			proto.init(opt, param);
+		},
+		infoText: function(opt, param){
+			var proto = new Proto(),
+				options = proto.options,
+				SelfObj = this,
+				_const = {};
+
+			//options
+			$.extend(true, options, {
+				holder: document.body,
+				"classes": [],
+				text: ""
+			});
+
+			proto.constructor = function(){
+				var parent = proto.htmlNodes.main[0] = SelfObj.htmlElement = cwe("span","class,info-txt",options.holder);
+				//add other classes
+				$(parent).addClass(options["classes"].join(" "));
+				//set text
+				SelfObj.setText(options.text);
+			};
+
+			//PROPERTYS
+			this.state = {};
+			this.htmlElement = null;
+
+			//METHODS
+			this.setText = function(text){
+				$.extend(true, options, {
+					text: text
+				});
+
+				$(SelfObj.htmlElement).html(options.text);
+			};
+
+			this.destroy = proto.destroy;
+			this.show = proto.show;
+			this.hide = proto.hide;
+			this.toogle = proto.toogle;
+
+			proto.init(opt, param);
+		},
+		boxClose: function(opt, param){
+			var proto = new Proto(),
+				options = proto.options,
+				SelfObj = this,
+				_const = {};
+
+			//options
+			$.extend(true, options, {
+				holder: document.body,
+				onClick: function(boxClose){}
+			});
+
+			proto.constructor = function(){
+				var parent = SelfObj.htmlElement = proto.htmlNodes.main[0] = cwe("b","class,p-close",options.holder);
+
+				//EVENTS
+				$(parent).click(function(e){
+					options.onClick(SelfObj);
+				});
+				$(window).keydown(keydownTrigger);
+			};
+			function keydownTrigger(e){
+				if(e.keyCode == 27 && SelfObj.state.enableHotKey){
+					$(SelfObj.htmlElement).click();
+				};
+			};
+
+			//PROPERTYS
+			this.state = {
+				enableHotKey: true
+			};
+			this.htmlElement = null;
+
+			//METHODS
+			this.setEnabledHotKey = function(state){
+				if(state){
+					SelfObj.state.enableHotKey = true;
+				}else{
+					SelfObj.state.enableHotKey = false;
+				};
+			};
+
+			this.destroy = function(param){
+				$(window).unbind("keydown", keydownTrigger);
+				proto.destroy(param);
+			};
+			this.show = proto.show;
+			this.hide = proto.hide;
+			this.toogle = proto.toogle;
+
+			proto.init(opt, param);
+		},
+		areaset: function(opt, param){
+			var proto = new Proto(),
+				options = proto.options,
+				SelfObj = this,
+				_const = {};
+
+			//options
+			$.extend(true, options, {
+				holder: document.body
+			});
+
+			proto.constructor = function(){
+				var parent = SelfObj.htmlElement = proto.htmlNodes.main[0] = cwe("ul","class,areaset",options.holder);
+			};
+
+			//PROPERTYS
+			this.state = {};
+			this.htmlElement = null;
+			this.items = {};
+
+			//METHODS
+			this.addControl = function(data){
+				if(!data.name) return;
+				if(!data.control) return;
+				if(SelfObj.items[data.name]) return;
+
+				var d = {
+					text: null,
+					control: null
+				};
+
+				//create text
+				d.text = cwe("li","class,set",SelfObj.htmlElement);
+				//set control
+				d.control = data.control(cwe("li","",SelfObj.htmlElement));
+
+				//apply data
+				SelfObj.items[data.name] = d;
+
+				//set text
+				SelfObj.setControlText(data.name, data.text);
+			};
+			this.getControl = function(name){
+				if(SelfObj.items[name]){
+					return SelfObj.items[name].control;
+				}
+				else{
+					return false;
+				};
+			};
+			this.setControlText = function(name, text){
+				if(SelfObj.items[name]){
+					$(SelfObj.items[name].text).html(text);
+
+					if(!text || text.length == 0){
+						$(SelfObj.items[name].text).hide();
+					}else{
+						$(SelfObj.items[name].text).show();
+					};
+				};
+			};
+			this.remove = function(name){
+				if(SelfObj.items[name]){
+					$(SelfObj.items[name].text).remove();
+					SelfObj.items[name].control.destroy();
+				};
+			};
+			this.removeAll = function(){
+				$(SelfObj.items, function(key, data){
+					SelfObj.remove(key);
+				});
+			};
+
+			this.destroy = function(param){
+				SelfObj.removeAll();
+
+				proto.destroy(param);
+			};
 			this.show = proto.show;
 			this.hide = proto.hide;
 			this.toogle = proto.toogle;
@@ -1619,6 +1926,369 @@
 
     //forms
     g.form = {
+		messageBox: function(opt, param, _setData){
+			var proto = new Proto(),
+				options = proto.options,
+				SelfObj = this,
+				lng = g.lng.form.messageBox,
+				_const = {
+					type: {
+						info: "info",
+						error: "error",
+						confirm: "confirm",
+						input: "input",
+						textarea: "textarea",
+						number: "number"
+					},
+					input: {
+						input: "input",
+						textarea: "textarea",
+						number: "number"
+					}
+				};
+
+			//options
+			$.extend(true, options, {
+				holder: document.body,
+				type: _const.type.info,
+				setData: {}
+			});
+			////set default data to setData
+			options.setData[((opt.type) ? opt.type : options.type)] = function(){
+				return {
+					title: "",
+					text: "",
+					"class": "",
+					controls: [],
+					buttons: {},
+					onClick: {},
+					events: [],
+					functions: {},
+					data: {}
+				};
+			};
+			////special lng of type msgbox
+			lng = lng[((opt.type) ? opt.type : options.type)];
+			////add special data to setData
+			var specialData = {
+				info: function(){
+					return {
+						buttons: {
+							ok: {
+								enable: true,
+								text: lng.buttons.ok.text,
+								classes: ["save"]
+							}
+						}
+					};
+				},
+				error: function(){
+					return {
+						"class": "error",
+						buttons: {
+							ok: {
+								enable: true,
+								text: lng.buttons.ok.text,
+								classes: ["save"]
+							}
+						}
+					};
+				},
+				confirm: function(){
+					return {
+						"class": "confirm",
+						buttons: {
+							ok: {
+								enable: true,
+								text: lng.buttons.ok.text,
+								classes: ["save"]
+							},
+							cancel: {
+								enable: true,
+								text: lng.buttons.cancel.text,
+								classes: ["cancel"]
+							}
+						}
+					};
+				},
+				input: function(){
+					return {
+						buttons: {
+							ok: {
+								enable: true,
+								text: lng.buttons.ok.text,
+								classes: ["save"]
+							},
+							cancel: {
+								enable: true,
+								text: lng.buttons.cancel.text,
+								classes: ["cancel"]
+							}
+						},
+						controls: [
+							//textline
+							{
+								name: _const.input.input,
+								control: function(holder){
+									return new g.control.textline({
+										holder: holder,
+										focus: true,
+										value: getParam("data.value"),
+										checkData: (getParam("data.allowEmpty") ? false: true),
+										minLength: (getParam("data.allowEmpty") ? 0: 1),
+										maxLength: 9999
+									},{visible: true});
+								}
+							}
+						],
+						data: {
+							value: "",
+							allowEmpty: true
+						}
+					};
+				},
+				textarea: function(){
+					return {
+						buttons: {
+							ok: {
+								enable: true,
+								text: lng.buttons.ok.text,
+								classes: ["save"],
+								hotKey: ["ctrlKey", "13"]
+							},
+							cancel: {
+								enable: true,
+								text: lng.buttons.cancel.text,
+								classes: ["cancel"]
+							}
+						},
+						controls: [
+							//textline
+							{
+								name: _const.input.input,
+								control: function(holder){
+									return new g.control.textarea({
+										holder: holder,
+										focus: true
+									},{visible: true});
+								}
+							}
+						]
+					};
+				},
+				number: function(){
+					return {
+						buttons: {
+							ok: {
+								enable: true,
+								text: lng.buttons.ok.text,
+								classes: ["save"],
+								hotKey: ["13"]
+							},
+							cancel: {
+								enable: true,
+								text: lng.buttons.cancel.text,
+								classes: ["cancel"]
+							}
+						},
+						controls: [
+							//textline number
+							{
+								name: _const.input.number,
+								control: function(holder){
+									return new g.control.textline({
+										holder: holder,
+										focus: true,
+										type: g.const.control.textline.type.number,
+										min: 0,
+										max: 999999999,
+										value: getParam("data.value")
+									},{visible: true});
+								}
+							}
+						],
+						data: {
+							value: 0
+						}
+					};
+				}
+			};
+			$.each(options.setData, function(key, data){
+				var _data = $.extend(true, data(), specialData[key](), _setData[key]);
+				options.setData[key] = function(){
+					return _data;
+				};
+			});
+
+			proto.constructor = function(){
+				//prepare data msg
+				//////////////////
+				var setData = options.setData[options.type]();
+					proto.data.zIndex = getNeedZindex(getMsgBoxes());
+				SelfObj.input = _const.input;
+				//////////////////
+
+				//EVENT - toogle active state buttons and close icon
+				$(window).keydown(keydowntrigger);
+				//
+
+				var parent = SelfObj.htmlElement = proto.htmlNodes.main[0] = $(cwe("div","class,p-wrap;wa_type,messageBox",options.holder)).css("zIndex", proto.data.zIndex)[0];
+					var pBox = $(cwe("div","class,p-box",parent)).addClass(setData["class"])[0];
+						var title = cwe("div","class,p-title",pBox);
+						//set title text
+						$(title).html(setData.title);
+							proto.data.boxClose = new g.control.boxClose({
+								holder: title,
+								onClick: function(box){
+									if(setData.buttons.cancel && setData.buttons.cancel.enable){
+										SelfObj.buttonContainer.getButton("cancel").click();
+									}else{
+										SelfObj.buttonContainer.getButton("ok").click();
+									};
+								}
+							},{visible: true});
+						var content = cwe("div","class,p-content-area",pBox);
+							var contentData = cwe("div","class,p-content",content);
+							var footer = cwe("div","class,p-footer",content);
+						var contentClear = $(cwe("div","class,p-content-clear",pBox)).hide()[0];
+
+				//set msg text
+				var msgText = proto.data.msgText = new g.control.infoText({
+					holder: contentData,
+					text: setData.text
+				},{visible: true});
+				//set error text
+				var errorText = proto.data.errorText = new g.control.infoText({
+					holder: contentData,
+					"classes": ["error"]
+				},{visible: false});
+
+				//set controls
+				SelfObj.areaset = new g.control.areaset({
+					holder: contentData
+				},{visible: true});
+				$.each(setData.controls, function(key, control){
+					SelfObj.areaset.addControl(control);
+				});
+
+				//set buttons
+				$.each(setData.buttons, function(key, btn_cfg){
+					setData.buttons[key].click = function(e, button){
+						if(setData.onClick[key]){
+							setData.onClick[key](SelfObj);
+						}else{
+							SelfObj.destroy({effect: true});
+						};
+					};
+				});
+				SelfObj.buttonContainer = new g.control.buttonContainer({
+					holder: footer,
+					buttons: setData.buttons
+				},{visible: true});
+
+				//EVENTS
+				$.each(setData.events, function(key, event){
+					event(SelfObj);
+				});
+
+				////set draggable
+				$(pBox).draggable({
+					handle: title,
+					opacity: 0.5,
+					containment: "document",
+					start: function(event, ui) {
+						$(contentClear).css({
+							width: $(content).outerWidth(),
+							height: $(content).outerHeight()
+						}).show();
+						$(content).hide();
+					},
+					stop: function(event, ui) {
+						$(contentClear).hide();
+						$(content).show();
+					}
+				});
+				////set to center
+				setToCenter(pBox);
+				$(window).resize(function(e){
+					setToCenter(pBox);
+				});
+				////set width msg text & error text
+				/*proto.data.textResizer = new g.utils.onChangeSize(contentData, function(element){
+					$(msgText.htmlElement).width($(element).width());
+					$(errorText.htmlElement).width($(element).width());
+				})*/
+			};
+
+			function getMsgBoxes(){
+				return $("[wa_type='messageBox']");
+			};
+			function getNeedZindex(msgboxes){
+				var zIndex_default = 100;
+
+				if(msgboxes.length == 0) return zIndex_default;
+				else{
+					return zIndex_default + (msgboxes.length);
+				};
+			};
+			function isActiveMsgBox(cur_zIndex, msgboxes){
+				var output = true;
+
+				$.each(msgboxes, function(key, value){
+					if(cur_zIndex < $(value).css("zIndex")) output = false;
+				});
+
+				return output;
+			};
+			function setToCenter(element){
+				$(element).css({
+					top: $(window).height()/2-$(element).height()/2,
+					left: $(window).width()/2-$(element).width()/2
+				});
+			};
+			function keydowntrigger(e){
+				var state = isActiveMsgBox(proto.data.zIndex, getMsgBoxes());
+				SelfObj.buttonContainer.setEnabledHotKey(state);
+				proto.data.boxClose.setEnabledHotKey(state);
+			};
+			function getParam(path){
+				return eval("options.setData[((opt.type) ? opt.type : options.type)]()" + ((path) ? "."+path : ""));
+			};
+
+			//PROPERTYS
+			this.input = null;
+			this.state = {};
+			this.htmlElement = null;
+			this.buttonContainer = null;
+			this.areaset = null;
+
+			//METHODS
+			this.errorShow = function(text){
+				proto.data.errorText.setText(text);
+				proto.data.errorText.show({effect: true});
+			};
+			this.errorHide = function(){
+				proto.data.errorText.hide();
+			};
+
+			this.destroy = function(param){
+				SelfObj.hide({
+					effect: true,
+					callback: function(){
+						proto.data.boxClose.destroy();
+						SelfObj.areaset.destroy();
+						//proto.data.textResizer.timer.stop();
+
+						proto.destroy(param);
+					}
+				});
+			};
+			this.show = proto.show;
+			this.hide = proto.hide;
+			this.toogle = proto.toogle;
+
+			proto.init(opt, param);
+		},
 		main: function(opt, param){
 			var proto = new Proto(),
 				options = proto.options,
@@ -1753,6 +2423,9 @@
 						"class": "new",
 						onClick: function(){
 							g.es = new wa_extSource({},{});
+							for(var i=1;i<=3;i++){
+								g.es.getItems().addRaw("Item #"+i);
+							};
 							g.data.form.main.setActiveForm({
 								form: function(holder){
 									return new g.form.editor({
@@ -1951,6 +2624,13 @@
 					text: lng.leftMenu.exMasks,
 					onClick: function(list){
 						leftMenu_setActiveItem(list);
+
+						//set form
+						SelfObj.setActiveForm({
+							form: function(holder){
+								return new form_exMasks({holder: holder}, {visible: false});
+							}
+						});
 					}
 				},{visible: true});
 				//////adress report
@@ -1959,6 +2639,13 @@
 					text: lng.leftMenu.adressReport,
 					onClick: function(list){
 						leftMenu_setActiveItem(list);
+
+						//set form
+						SelfObj.setActiveForm({
+							form: function(holder){
+								return new form_report({holder: holder}, {visible: false});
+							}
+						});
 					}
 				},{visible: true});
 				////menu functions
@@ -1994,39 +2681,113 @@
 					var parent = SelfObj.htmlElement = proto.htmlNodes.main[0] = cwe("div","class,itemarea",options.holder);
 					proto.htmlNodes.main[1] = cwe("div","class,cleared",options.holder);
 						var listOption = cwe("div","class,listoption",parent);
-							var list_priority = new g.control.list({
+							var list_priority = proto.data.btnPriority = new g.control.list({
 								holder: listOption,
 								text: lng.listOption.priority.text,
 								classes: ["priority"],
 								onClick: function(list){
-									alert("priority");
+									var msg = new g.form.messageBox({type: g.const.form.messageBox.type.number},{visible: false},{
+										number: {
+											title: lng.msg.setPriority.title,
+											text: lng.msg.setPriority.text,
+											data: {
+												value: 1
+											},
+											onClick: {
+												ok: function(msg){
+													msg.errorHide();
+
+													if(msg.areaset.getControl(msg.input.number).state.error){
+														msg.errorShow(lng.msg.setPriority.error);
+														msg.areaset.getControl(msg.input.number).focus(true);
+														return;
+													};
+
+													$.each(getCheckedFormItems(SelfObj.items), function(key, item){
+														item.setPriority(msg.areaset.getControl(msg.input.number).getValue());
+														item.setChecked(false);
+													});
+
+													proto.htmlNodes.checkBox_all.checked = false;
+													SelfObj.groupButtonVisibleState(false);
+
+													msg.destroy();
+												}
+											}
+										}
+									});
+									msg.show({effect: true});
 								}
-							},{visible: true});
-							var list_delete = new g.control.list({
+							},{visible: false});
+							var list_delete = proto.data.btnDelete = new g.control.list({
 								holder: listOption,
 								text: lng.listOption["delete"].text,
 								classes: ["delete"],
 								onClick: function(list){
-									alert("delete");
+									var msg = new g.form.messageBox({type: g.const.form.messageBox.type.confirm},{visible: false},{
+										confirm: {
+											title: lng.msg.removeItems.title,
+											text: lng.msg.removeItems.text,
+											onClick: {
+												ok: function(msg){
+													msg.destroy({callback: function(){
+														$.each(getCheckedFormItems(SelfObj.items), function(key, item){
+															item.destroy();
+														});
+
+														proto.htmlNodes.checkBox_all.checked = false;
+														SelfObj.groupButtonVisibleState(false);
+													}});
+												}
+											}
+										}
+									});
+									msg.show({effect: true});
 								}
-							},{visible: true});
+							},{visible: false});
 							var btn_add = new g.control.button({
 								holder: listOption,
 								text: lng.listOption.add.text,
 								classes: ["add"],
 								onClick: function(list){
-									alert("add");
+									var msg = new g.form.messageBox({type: g.const.form.messageBox.type.input},{visible: false},{
+										input: {
+											title: lng.msg.add.title,
+											text: lng.msg.add.text,
+											onClick: {
+												ok: function(msg){
+													SelfObj.addItem(g.es.getItems().addRaw(msg.areaset.getControl(msg.input.input).getValue()));
+
+													msg.destroy();
+												}
+											}
+										}
+									});
+									msg.show({effect: true});
 								}
 							},{visible: true});
 
 						var listArea = cwe("div","class,listarea",parent);
 							var listTable = cwe("table","class,listtable",listArea);
 								var listTable_header = cwe("tr","",cwe("thead","",listTable));
-									var checkBox = cwe("input","type,checkbox",cwe("td","class,checkbx",listTable_header));
+									var checkBox = proto.htmlNodes.checkBox_all = cwe("input","type,checkbox",cwe("td","class,checkbx",listTable_header));
 									$(cwe("td","class,name",listTable_header)).text(lng.listTable.name.text);
 									$(cwe("td","class,priority",listTable_header)).text(lng.listTable.priority.text);
 									$(cwe("td","class,option",listTable_header)).text(lng.listTable.option.text);
-								var listTable_body = proto.data.itemHolder = cwe("tbody","",listTable);
+								var listTable_body = proto.htmlNodes.itemHolder = cwe("tbody","",listTable);
+
+					//set events
+					$(checkBox).click(function(e){
+						$.each(SelfObj.items, function(key, item){
+							item.setChecked(e.target.checked);
+							SelfObj.groupButtonVisibleState(e.target.checked);
+						});
+					});
+
+					//set items
+					$.each(g.es.getItems().get(), function(key, item){
+						SelfObj.addItem(item);
+					});
 				};
 
 				function Item(opt, param){
@@ -2039,19 +2800,163 @@
 					//options
 					$.extend(true, options, {
 						holder: document.body,
-						element: null
+						"class": {
+							checked: "checked"
+						},
+						element: null,
+						callback_remove: function(){},
+						callback_checkbox: function(){}
 					});
 
 					proto.constructor = function(){
 						var parent = SelfObj.htmlElement = proto.htmlNodes.main[0] = cwe("tr","",options.holder);
+							var checkBox = proto.htmlNodes.checkBox = cwe("input","type,checkbox",cwe("td","class,checkbx",parent));
+							var name = proto.htmlNodes.name = cwe("span","class,elink",cwe("td","class,name",parent));
+							var priority = proto.htmlNodes.priority = cwe("td","class,priority",parent);
+							var option = cwe("td","class,option",parent);
+
+						var icon_edit = new g.control.icon({
+							holder: option,
+							iconSize: 16,
+							classes: ["edit"],
+							tooltip: lng.listTable.option.icons.edit.tooltip,
+							onClick: function(icon){
+								var msg = new g.form.messageBox({type: g.const.form.messageBox.type.input},{visible: false},{
+									input: {
+										title: lng.msg.rename.title,
+										text: lng.msg.rename.text,
+										data: {
+											value: SelfObj.getName()
+										},
+										onClick: {
+											ok: function(msg){
+												SelfObj.setName(msg.areaset.getControl(msg.input.input).getValue());
+
+												msg.destroy();
+											}
+										}
+									}
+								});
+								msg.show({effect: true});
+							}
+						},{visible: true});
+						var icon_priority = new g.control.icon({
+							holder: option,
+							iconSize: 16,
+							classes: ["priority"],
+							tooltip: lng.listTable.option.icons.priority.tooltip,
+							onClick: function(icon){
+								var msg = new g.form.messageBox({type: g.const.form.messageBox.type.number},{visible: false},{
+									number: {
+										title: lng.msg.setPriority.title,
+										text: lng.msg.setPriority.text,
+										data: {
+											value: SelfObj.getPriority()
+										},
+										onClick: {
+											ok: function(msg){
+												msg.errorHide();
+
+												if(msg.areaset.getControl(msg.input.number).state.error){
+													msg.errorShow(lng.msg.setPriority.error);
+													msg.areaset.getControl(msg.input.number).focus(true);
+													return;
+												};
+
+												SelfObj.setPriority(msg.areaset.getControl(msg.input.number).getValue());
+
+												msg.destroy();
+											}
+										}
+									}
+								});
+								msg.show({effect: true});
+							}
+						},{visible: true});
+						var icon_delete = new g.control.icon({
+							holder: option,
+							iconSize: 16,
+							classes: ["delete"],
+							tooltip: lng.listTable.option.icons["delete"].tooltip,
+							onClick: function(icon){
+								var msg = new g.form.messageBox({type: g.const.form.messageBox.type.confirm},{visible: false},{
+									confirm: {
+										title: lng.msg.removeItem.title,
+										text: lng.msg.removeItem.text,
+										onClick: {
+											ok: function(msg){
+												msg.destroy({callback: function(){
+													SelfObj.destroy();
+												}});
+											}
+										}
+									}
+								});
+								msg.show({effect: true});
+							}
+						},{visible: true});
+
+						//set name & priority
+						SelfObj.setName(SelfObj.getName());
+						SelfObj.setPriority(SelfObj.getPriority());
+
+						//set events
+						$(checkBox).click(function(e){
+							e.stopPropagation();
+						});
+						$(checkBox).change(function(e){
+							SelfObj.setChecked(e.target.checked);
+							options.callback_checkbox();
+						});
+						$(name).click(function(e){
+							e.stopPropagation();
+						});
+						$(parent).click(function(e){
+							$(checkBox).click();
+						});
 					};
 
 					//PROPERTYS
-					this.state = {};
+					this.state = {
+						checked: false
+					};
 					this.htmlElement = null;
 
 					//METHODS
-					this.destroy = proto.destroy;
+					this.getName = function(){
+						return options.element.getName();
+					};
+					this.getPriority = function(){
+						return options.element.getPriority();
+					};
+					this.getElement = function(){
+						return options.element;
+					};
+					this.setName = function(name){
+						options.element.setName(name);
+						$(proto.htmlNodes.name).text(((typeof SelfObj.getName()) == "string" && SelfObj.getName().length > 0) ? SelfObj.getName() : lng.unnamed);
+					};
+					this.setPriority = function(priority){
+						options.element.setPriority(priority);
+						$(proto.htmlNodes.priority).text(SelfObj.getPriority());
+					};
+					this.setChecked = function(state){
+						if(state){
+							SelfObj.state.checked = true;
+							proto.htmlNodes.checkBox.checked = true;
+							$(SelfObj.htmlElement).addClass(options["class"].checked);
+						}else{
+							SelfObj.state.checked = false;
+							proto.htmlNodes.checkBox.checked = false;
+							$(SelfObj.htmlElement).removeClass(options["class"].checked);
+						};
+					};
+
+					this.destroy = function(){
+						g.es.getItems().remove(options.element);
+						options.callback_remove(SelfObj);
+						proto.destroy();
+					};
 					this.show = proto.show;
 					this.hide = proto.hide;
 					this.toogle = proto.toogle;
@@ -2062,15 +2967,667 @@
 				//PROPERTYS
 				this.state = {};
 				this.htmlElement = null;
-				this.items = {};
+				this.items = [];
 
 				//METHODS
+				this.addItem = function(item){
+					SelfObj.items.push(
+						new Item({
+							holder: proto.htmlNodes.itemHolder,
+							element: item,
+							callback_remove: function(item){
+								SelfObj.removeItem(item);
+							},
+							callback_checkbox: function(){
+								var checkAll = true,
+									checkOneOrMore = false;
+
+								$.each(SelfObj.items, function(key, item){
+									if(!item.state.checked){
+										checkAll = false;
+									}else{
+										checkOneOrMore = true;
+									};
+								});
+
+								proto.htmlNodes.checkBox_all.checked = checkAll;
+								SelfObj.groupButtonVisibleState(checkOneOrMore);
+							}
+						},{visible: true})
+					);
+				};
+				this.removeItem = function(item){
+					var index = $.inArray(item, SelfObj.items);
+					if(index != -1){
+						SelfObj.items.splice(index, 1);
+					};
+				};
+				this.groupButtonVisibleState = function(state){
+					if(state){
+						proto.data.btnPriority.show();
+						proto.data.btnDelete.show();
+					}else{
+						proto.data.btnPriority.hide();
+						proto.data.btnDelete.hide();
+					};
+				};
+
 				this.destroy = proto.destroy;
 				this.show = proto.show;
 				this.hide = proto.hide;
 				this.toogle = proto.toogle;
 
 				proto.init(opt, param);
+			};
+			function form_exMasks(opt, param){
+				var proto = new Proto(),
+					options = proto.options,
+					SelfObj = this,
+					lng = g.lng.form.editor.form.exMasks,
+					_const = {};
+
+				//options
+				$.extend(true, options, {
+					holder: document.body
+				});
+
+				proto.constructor = function(){
+					var parent = SelfObj.htmlElement = proto.htmlNodes.main[0] = cwe("div","class,itemarea",options.holder);
+					proto.htmlNodes.main[1] = cwe("div","class,cleared",options.holder);
+					var listOption = cwe("div","class,listoption",parent);
+					var list_delete = proto.data.btnDelete = new g.control.list({
+						holder: listOption,
+						text: lng.listOption["delete"].text,
+						classes: ["delete"],
+						onClick: function(list){
+							var msg = new g.form.messageBox({type: g.const.form.messageBox.type.confirm},{visible: false},{
+								confirm: {
+									title: lng.msg.removeItems.title,
+									text: lng.msg.removeItems.text,
+									onClick: {
+										ok: function(msg){
+											msg.destroy({callback: function(){
+												$.each(getCheckedFormItems(SelfObj.items), function(key, item){
+													item.destroy();
+												});
+
+												proto.htmlNodes.checkBox_all.checked = false;
+												SelfObj.groupButtonVisibleState(false);
+											}});
+										}
+									}
+								}
+							});
+							msg.show({effect: true});
+						}
+					},{visible: false});
+					var btn_add = new g.control.button({
+						holder: listOption,
+						text: lng.listOption.add.text,
+						classes: ["add"],
+						onClick: function(list){
+							var msg = new g.form.messageBox({type: g.const.form.messageBox.type.input},{visible: false},{
+								input: {
+									title: lng.msg.add.title,
+									text: lng.msg.add.text,
+									onClick: {
+										ok: function(msg){
+											msg.errorHide();
+
+											if(msg.areaset.getControl(msg.input.input).state.error){
+												msg.errorShow(lng.msg.add.error);
+												msg.areaset.getControl(msg.input.input).focus(true);
+												return;
+											};
+
+											SelfObj.addItem(g.es.getExMasks().addRaw(msg.areaset.getControl(msg.input.input).getValue()));
+
+											msg.destroy();
+										}
+									},
+									data: {
+										allowEmpty: false
+									}
+								}
+							});
+							msg.show({effect: true});
+						}
+					},{visible: true});
+
+					var listArea = cwe("div","class,listarea",parent);
+					var listTable = cwe("table","class,listtable",listArea);
+					var listTable_header = cwe("tr","",cwe("thead","",listTable));
+					var checkBox = proto.htmlNodes.checkBox_all = cwe("input","type,checkbox",cwe("td","class,checkbx",listTable_header));
+					$(cwe("td","class,name",listTable_header)).text(lng.listTable.name.text);
+					$(cwe("td","class,option",listTable_header)).text(lng.listTable.option.text);
+					var listTable_body = proto.htmlNodes.itemHolder = cwe("tbody","",listTable);
+
+					//set events
+					$(checkBox).click(function(e){
+						$.each(SelfObj.items, function(key, item){
+							item.setChecked(e.target.checked);
+							SelfObj.groupButtonVisibleState(e.target.checked);
+						});
+					});
+
+					//set items
+					$.each(g.es.getExMasks().get(), function(key, item){
+						SelfObj.addItem(item);
+					});
+				};
+
+				function Item(opt, param){
+					var proto = new Proto(),
+						options = proto.options,
+						SelfObj = this,
+						lng = g.lng.form.editor.form.exMasks,
+						_const = {};
+
+					//options
+					$.extend(true, options, {
+						holder: document.body,
+						"class": {
+							checked: "checked"
+						},
+						element: null,
+						callback_remove: function(){},
+						callback_checkbox: function(){}
+					});
+
+					proto.constructor = function(){
+						var parent = SelfObj.htmlElement = proto.htmlNodes.main[0] = cwe("tr","",options.holder);
+						var checkBox = proto.htmlNodes.checkBox = cwe("input","type,checkbox",cwe("td","class,checkbx",parent));
+						var name = proto.htmlNodes.name = cwe("span","class,elink",cwe("td","class,name",parent));
+						var option = cwe("td","class,option",parent);
+
+						var icon_edit = new g.control.icon({
+							holder: option,
+							iconSize: 16,
+							classes: ["edit"],
+							tooltip: lng.listTable.option.icons.edit.tooltip,
+							onClick: function(icon){
+								var msg = new g.form.messageBox({type: g.const.form.messageBox.type.input},{visible: false},{
+									input: {
+										title: lng.msg.edit.title,
+										text: lng.msg.edit.text,
+										data: {
+											value: SelfObj.getExMask(),
+											allowEmpty: false
+										},
+										onClick: {
+											ok: function(msg){
+												msg.errorHide();
+
+												if(msg.areaset.getControl(msg.input.input).state.error){
+													msg.errorShow(lng.msg.edit.error);
+													msg.areaset.getControl(msg.input.input).focus(true);
+													return;
+												};
+
+												SelfObj.setExMask(msg.areaset.getControl(msg.input.input).getValue());
+
+												msg.destroy();
+											}
+										}
+									}
+								});
+								msg.show({effect: true});
+							}
+						},{visible: true});
+						var icon_delete = new g.control.icon({
+							holder: option,
+							iconSize: 16,
+							classes: ["delete"],
+							tooltip: lng.listTable.option.icons["delete"].tooltip,
+							onClick: function(icon){
+								var msg = new g.form.messageBox({type: g.const.form.messageBox.type.confirm},{visible: false},{
+									confirm: {
+										title: lng.msg.removeItem.title,
+										text: lng.msg.removeItem.text,
+										onClick: {
+											ok: function(msg){
+												msg.destroy({callback: function(){
+													SelfObj.destroy();
+												}});
+											}
+										}
+									}
+								});
+								msg.show({effect: true});
+							}
+						},{visible: true});
+
+						//set name & priority
+						SelfObj.setExMask(SelfObj.getExMask());
+
+						//set events
+						$(name).click(function(e){
+							e.stopPropagation();
+							icon_edit.click();
+						});
+						$(checkBox).click(function(e){
+							e.stopPropagation();
+						});
+						$(checkBox).change(function(e){
+							SelfObj.setChecked(e.target.checked);
+							options.callback_checkbox();
+						});
+						$(name).click(function(e){
+							e.stopPropagation();
+						});
+						$(parent).click(function(e){
+							$(checkBox).click();
+						});
+					};
+
+					//PROPERTYS
+					this.state = {
+						checked: false
+					};
+					this.htmlElement = null;
+
+					//METHODS
+					this.getExMask = function(){
+						return options.element.getExMask();
+					};
+					this.getElement = function(){
+						return options.element;
+					};
+					this.setExMask = function(mask){
+						options.element.setExMask(mask);
+						$(proto.htmlNodes.name).text(SelfObj.getExMask());
+					};
+					this.setChecked = function(state){
+						if(state){
+							SelfObj.state.checked = true;
+							proto.htmlNodes.checkBox.checked = true;
+							$(SelfObj.htmlElement).addClass(options["class"].checked);
+						}else{
+							SelfObj.state.checked = false;
+							proto.htmlNodes.checkBox.checked = false;
+							$(SelfObj.htmlElement).removeClass(options["class"].checked);
+						};
+					};
+
+					this.destroy = function(){
+						g.es.getExMasks().remove(options.element);
+						options.callback_remove(SelfObj);
+						proto.destroy();
+					};
+					this.show = proto.show;
+					this.hide = proto.hide;
+					this.toogle = proto.toogle;
+
+					proto.init(opt, param);
+				};
+
+				//PROPERTYS
+				this.state = {};
+				this.htmlElement = null;
+				this.items = [];
+
+				//METHODS
+				this.addItem = function(item){
+					SelfObj.items.push(
+						new Item({
+							holder: proto.htmlNodes.itemHolder,
+							element: item,
+							callback_remove: function(item){
+								SelfObj.removeItem(item);
+							},
+							callback_checkbox: function(){
+								var checkAll = true,
+									checkOneOrMore = false;
+
+								$.each(SelfObj.items, function(key, item){
+									if(!item.state.checked){
+										checkAll = false;
+									}else{
+										checkOneOrMore = true;
+									};
+								});
+
+								proto.htmlNodes.checkBox_all.checked = checkAll;
+								SelfObj.groupButtonVisibleState(checkOneOrMore);
+							}
+						},{visible: true})
+					);
+				};
+				this.removeItem = function(item){
+					var index = $.inArray(item, SelfObj.items);
+					if(index != -1){
+						SelfObj.items.splice(index, 1);
+					};
+				};
+				this.groupButtonVisibleState = function(state){
+					if(state){
+						proto.data.btnDelete.show();
+					}else{
+						proto.data.btnDelete.hide();
+					};
+				};
+
+				this.destroy = proto.destroy;
+				this.show = proto.show;
+				this.hide = proto.hide;
+				this.toogle = proto.toogle;
+
+				proto.init(opt, param);
+			};
+			function form_report(opt, param){
+				var proto = new Proto(),
+					options = proto.options,
+					SelfObj = this,
+					lng = g.lng.form.editor.form.report,
+					_const = {};
+
+				//options
+				$.extend(true, options, {
+					holder: document.body
+				});
+
+				proto.constructor = function(){
+					var parent = SelfObj.htmlElement = proto.htmlNodes.main[0] = cwe("div","class,itemarea",options.holder);
+					proto.htmlNodes.main[1] = cwe("div","class,cleared",options.holder);
+					var listOption = cwe("div","class,listoption",parent);
+					var list_delete = proto.data.btnDelete = new g.control.list({
+						holder: listOption,
+						text: lng.listOption["delete"].text,
+						classes: ["delete"],
+						onClick: function(list){
+							var msg = new g.form.messageBox({type: g.const.form.messageBox.type.confirm},{visible: false},{
+								confirm: {
+									title: lng.msg.removeItem.title,
+									text: lng.msg.removeItem.text,
+									onClick: {
+										ok: function(msg){
+											msg.destroy({callback: function(){
+												$.each(getCheckedFormItems(SelfObj.items), function(key, item){
+													item.destroy();
+												});
+
+												proto.htmlNodes.checkBox_all.checked = false;
+												SelfObj.groupButtonVisibleState(false);
+											}});
+										}
+									}
+								}
+							});
+							msg.show({effect: true});
+						}
+					},{visible: false});
+					var btn_add = new g.control.button({
+						holder: listOption,
+						text: lng.listOption.add.text,
+						classes: ["add"],
+						onClick: function(list){
+							if(SelfObj.items.length >= 1){
+								var msg = new g.form.messageBox({type: g.const.form.messageBox.type.error},{visible: false},{
+									error: {
+										title: lng.msg.canNotAdd.title,
+										text: lng.msg.canNotAdd.text
+									}
+								});
+								msg.show({effect: true});
+
+								return;
+							};
+
+							var msg = new g.form.messageBox({type: g.const.form.messageBox.type.input},{visible: false},{
+								input: {
+									title: lng.msg.add.title,
+									text: lng.msg.add.text,
+									onClick: {
+										ok: function(msg){
+											msg.errorHide();
+
+											if(msg.areaset.getControl(msg.input.input).state.error){
+												msg.errorShow(lng.msg.add.error);
+												msg.areaset.getControl(msg.input.input).focus(true);
+												return;
+											};
+
+											SelfObj.addItem(g.es.setReport(msg.areaset.getControl(msg.input.input).getValue()));
+
+											msg.destroy();
+										}
+									},
+									data: {
+										allowEmpty: false
+									}
+								}
+							});
+							msg.show({effect: true});
+						}
+					},{visible: true});
+
+					var listArea = cwe("div","class,listarea",parent);
+					var listTable = cwe("table","class,listtable",listArea);
+					var listTable_header = cwe("tr","",cwe("thead","",listTable));
+					var checkBox = proto.htmlNodes.checkBox_all = cwe("input","type,checkbox",cwe("td","class,checkbx",listTable_header));
+					$(cwe("td","class,name",listTable_header)).text(lng.listTable.name.text);
+					$(cwe("td","class,option",listTable_header)).text(lng.listTable.option.text);
+					var listTable_body = proto.htmlNodes.itemHolder = cwe("tbody","",listTable);
+
+					//set events
+					$(checkBox).click(function(e){
+						$.each(SelfObj.items, function(key, item){
+							item.setChecked(e.target.checked);
+							SelfObj.groupButtonVisibleState(e.target.checked);
+						});
+					});
+
+					//set items
+					if(g.es.getReport().length > 0) SelfObj.addItem(g.es);
+				};
+
+				function Item(opt, param){
+					var proto = new Proto(),
+						options = proto.options,
+						SelfObj = this,
+						lng = g.lng.form.editor.form.report,
+						_const = {};
+
+					//options
+					$.extend(true, options, {
+						holder: document.body,
+						"class": {
+							checked: "checked"
+						},
+						element: null,
+						callback_remove: function(){},
+						callback_checkbox: function(){}
+					});
+
+					proto.constructor = function(){
+						var parent = SelfObj.htmlElement = proto.htmlNodes.main[0] = cwe("tr","",options.holder);
+						var checkBox = proto.htmlNodes.checkBox = cwe("input","type,checkbox",cwe("td","class,checkbx",parent));
+						var name = proto.htmlNodes.name = cwe("span","class,elink",cwe("td","class,name",parent));
+						var option = cwe("td","class,option",parent);
+
+						var icon_edit = new g.control.icon({
+							holder: option,
+							iconSize: 16,
+							classes: ["edit"],
+							tooltip: lng.listTable.option.icons.edit.tooltip,
+							onClick: function(icon){
+								var msg = new g.form.messageBox({type: g.const.form.messageBox.type.input},{visible: false},{
+									input: {
+										title: lng.msg.edit.title,
+										text: lng.msg.edit.text,
+										data: {
+											value: SelfObj.getReport(),
+											allowEmpty: false
+										},
+										onClick: {
+											ok: function(msg){
+												msg.errorHide();
+
+												if(msg.areaset.getControl(msg.input.input).state.error){
+													msg.errorShow(lng.msg.edit.error);
+													msg.areaset.getControl(msg.input.input).focus(true);
+													return;
+												};
+
+												SelfObj.setReport(msg.areaset.getControl(msg.input.input).getValue());
+
+												msg.destroy();
+											}
+										}
+									}
+								});
+								msg.show({effect: true});
+							}
+						},{visible: true});
+						var icon_delete = new g.control.icon({
+							holder: option,
+							iconSize: 16,
+							classes: ["delete"],
+							tooltip: lng.listTable.option.icons["delete"].tooltip,
+							onClick: function(icon){
+								var msg = new g.form.messageBox({type: g.const.form.messageBox.type.confirm},{visible: false},{
+									confirm: {
+										title: lng.msg.removeItem.title,
+										text: lng.msg.removeItem.text,
+										onClick: {
+											ok: function(msg){
+												msg.destroy({callback: function(){
+													SelfObj.destroy();
+												}});
+											}
+										}
+									}
+								});
+								msg.show({effect: true});
+							}
+						},{visible: true});
+
+						//set name & priority
+						SelfObj.setReport(SelfObj.getReport());
+
+						//set events
+						$(name).click(function(e){
+							e.stopPropagation();
+							icon_edit.click();
+						});
+						$(checkBox).click(function(e){
+							e.stopPropagation();
+						});
+						$(checkBox).change(function(e){
+							SelfObj.setChecked(e.target.checked);
+							options.callback_checkbox();
+						});
+						$(name).click(function(e){
+							e.stopPropagation();
+						});
+						$(parent).click(function(e){
+							$(checkBox).click();
+						});
+					};
+
+					//PROPERTYS
+					this.state = {
+						checked: false
+					};
+					this.htmlElement = null;
+
+					//METHODS
+					this.getReport = function(){
+						return options.element.getReport();
+					};
+					this.getElement = function(){
+						return options.element;
+					};
+					this.setReport = function(report){
+						options.element.setReport(report);
+						$(proto.htmlNodes.name).text(SelfObj.getReport());
+					};
+					this.setChecked = function(state){
+						if(state){
+							SelfObj.state.checked = true;
+							proto.htmlNodes.checkBox.checked = true;
+							$(SelfObj.htmlElement).addClass(options["class"].checked);
+						}else{
+							SelfObj.state.checked = false;
+							proto.htmlNodes.checkBox.checked = false;
+							$(SelfObj.htmlElement).removeClass(options["class"].checked);
+						};
+					};
+
+					this.destroy = function(){
+						g.es.setReport("");
+						options.callback_remove(SelfObj);
+						proto.destroy();
+					};
+					this.show = proto.show;
+					this.hide = proto.hide;
+					this.toogle = proto.toogle;
+
+					proto.init(opt, param);
+				};
+
+				//PROPERTYS
+				this.state = {};
+				this.htmlElement = null;
+				this.items = [];
+
+				//METHODS
+				this.addItem = function(item){
+					SelfObj.items.push(
+						new Item({
+							holder: proto.htmlNodes.itemHolder,
+							element: item,
+							callback_remove: function(item){
+								SelfObj.removeItem(item);
+							},
+							callback_checkbox: function(){
+								var checkAll = true,
+									checkOneOrMore = false;
+
+								$.each(SelfObj.items, function(key, item){
+									if(!item.state.checked){
+										checkAll = false;
+									}else{
+										checkOneOrMore = true;
+									};
+								});
+
+								proto.htmlNodes.checkBox_all.checked = checkAll;
+								SelfObj.groupButtonVisibleState(checkOneOrMore);
+							}
+						},{visible: true})
+					);
+				};
+				this.removeItem = function(item){
+					var index = $.inArray(item, SelfObj.items);
+					if(index != -1){
+						SelfObj.items.splice(index, 1);
+					};
+				};
+				this.groupButtonVisibleState = function(state){
+					if(state){
+						proto.data.btnDelete.show();
+					}else{
+						proto.data.btnDelete.hide();
+					};
+				};
+
+				this.destroy = proto.destroy;
+				this.show = proto.show;
+				this.hide = proto.hide;
+				this.toogle = proto.toogle;
+
+				proto.init(opt, param);
+			};
+			//other functions
+			function getCheckedFormItems(itemsContainer){
+				var out = [];
+
+				$.each(itemsContainer, function(key, item){
+					if(item.state.checked) out.push(item);
+				});
+
+				return out;
 			};
 
 			//PROPERTYS
