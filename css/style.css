@@ -1067,7 +1067,6 @@ ul.areaset li {
 }
 
 #sortable {
-    position: relative;
     display: block;
     margin: 0;
     padding: 0;
@@ -1077,8 +1076,10 @@ ul.areaset li {
 
 #sortable li {
     display: block;
-    margin: 5px;
-    padding: 7px;
+    margin: 3px;
+    padding: 0 7px;
+    height:24px;
+    line-height:24px;
     border: 1px solid rgba(0, 0, 0, 0);
     font-style: italic;
     cursor: default;
@@ -1097,8 +1098,10 @@ ul.areaset li {
 
 #sortable .move {
     display: block;
-    margin: 5px;
-    padding: 7px;
+    margin: 3px;
+    padding: 0 7px;
+    height:24px;
+    line-height:24px;
     border: 1px dashed #727272;
     background: #fff;
     color: #000;
@@ -1110,6 +1113,7 @@ ul.areaset li {
 }
 
 #sortable .move-hover {
+    position: relative;
     display: block;
     overflow: hidden;
     margin: 5px;
