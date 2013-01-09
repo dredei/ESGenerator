@@ -6,8 +6,10 @@ if(isset($_POST[_KEY_POST_JSON]) && $json = $_POST[_KEY_POST_JSON]){
 
     $fileName = _ROOT_TMP_ . _SP_ . getFreeNameFile(_ROOT_TMP_, "txt");
 
+    ini_set("magic_quotes_runtime", false);
+
     $h = fopen($fileName,"w+");
-    fwrite($h, $json);
+    fwrite($h, stripslashes($json));
     fclose($h);
 
     if($zip){

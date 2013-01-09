@@ -2035,7 +2035,7 @@
 				$(btnUpload.buttonHolder).attr("id", btnId);
 				var fileInfo = proto.htmlNodes.fileInfo = cwe("span","class,fileinfo",parent);
 
-				SelfObj.setSelectedFile(lng.notSelectedFile);
+				SelfObj.setSelectedFile(false);
 
 				init_uploader();
 				function init_uploader(){
@@ -2060,8 +2060,7 @@
 							try{
 								if(numFilesQueued > 0){
 									for(var i=0;i<getCountAllFiles(this)-1;i++) this.cancelUpload(this.getFile(i)["id"]);
-									SelfObj.setSelectedFile(this.getFile(getCountAllFiles(this)-1)["name"]);
-									SelfObj.state.selectedFile = true;
+                                    SelfObj.setSelectedFile(this.getFile(getCountAllFiles(this)-1)["name"]);
 								};
 							}catch(ex){};
 						},
@@ -2092,6 +2091,7 @@
 						upload_complete_handler     : function(){
 							if (this.getStats().files_queued == 0){
 								proto.data.swfu.setButtonDisabled(false);
+                                SelfObj.setSelectedFile(false);
 								g.data.control.loader.hide({effect: true});
 							};
 						}
@@ -2114,7 +2114,13 @@
 
 			//METHODS
 			this.setSelectedFile = function(text){
-				$(proto.htmlNodes.fileInfo).text(text);
+				if(text){
+                    $(proto.htmlNodes.fileInfo).text(text);
+                    SelfObj.state.selectedFile = true;
+                }else{
+                    $(proto.htmlNodes.fileInfo).text(lng.notSelectedFile);
+                    SelfObj.state.selectedFile = false;
+                };
 			};
 			this.startUpload = function(){
 				proto.data.swfu.setButtonDisabled(true);
@@ -2124,6 +2130,7 @@
 			this.stopUpload = function(){
 				for(var i=0;i<getCountAllFiles(proto.data.swfu);i++) proto.data.swfu.cancelUpload(proto.data.swfu.getFile(i)["id"]);
 				proto.data.swfu.setButtonDisabled(false);
+                SelfObj.setSelectedFile(false);
 				g.data.control.loader.hide({effect: true});
 			};
 
