@@ -2809,16 +2809,30 @@
 						text: lng.menuItems.createNew.text,
 						"class": "new",
 						onClick: function(){
-							g.es = new wa_extSource({},{
-								onChange: g.options.callback_esUpdate
-							});
-							g.data.form.main.setActiveForm({
-								form: function(holder){
-									return new g.form.editor({
-										holder: holder
-									},{visible: false});
+							var msg = new g.form.messageBox({type: g.const.form.messageBox.type.input},{visible: false},{
+								input: {
+									title: lng.msg.setNameProject.title,
+									text: lng.msg.setNameProject.text,
+									onClick: {
+										ok: function(msg){
+											g.es = new wa_extSource({},{
+												onChange: g.options.callback_esUpdate
+											});
+											g.es.setProjectName(msg.areaset.getControl(msg.input.input).getValue());
+											g.data.form.main.setActiveForm({
+												form: function(holder){
+													return new g.form.editor({
+														holder: holder
+													},{visible: false});
+												}
+											});
+
+											msg.destroy();
+										}
+									}
 								}
 							});
+							msg.show({effect: true});
 						},
 						order: 1,
 						enable: true
