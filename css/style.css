@@ -40,7 +40,7 @@ body {
 }
 
 .elink.active {
-    color: #0162ac;
+    color: #333;
     text-decoration: none;
 }
 
@@ -1140,6 +1140,7 @@ ul.areaset li {
     float: right;
     height: 24px;
     line-height: 24px;
+    color: #aaa;
 }
 
 .page-view .ename, .page-view .elink {
@@ -1152,7 +1153,8 @@ ul.areaset li {
     display: inline-block;
     position: relative;
     left: .3em;
-    color: #333;
+    color: #aaa;
+    cursor: default;
 }
 
 .page-view .elink:last-child::after {
