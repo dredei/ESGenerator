@@ -2,15 +2,23 @@
     var g = {
         options: {
             url: {
-                upload: "",
-                downloadFromUrl: "",
-                download: ""
+                uploadFromUrl: "ajax.php?route=esDownloadFromUrl",
+                uploadFromPC: "ajax.php?route=esDownloadFromPC",
+				downloadESFile: "ajax.php?route=esGenerate",
+				downloadESFileAsArchive: "ajax.php?route=esGenerate"
             },
-            basePath: "js/"
+            basePath: "js/",
+			callback_esUpdate: function(es){
+				if(g.data.form.main.activeForm.itemInfo){
+					g.data.form.main.activeForm.itemInfo.reload();
+				};
+				if(g.data.form.main.activeForm instanceof g.form.editor) g.data.form.main.infoArea.setSize(g.data.form.main.activeForm.getSize());
+			}
         },
         data: {
             control: {
-                tooltip: null
+                tooltip: null,
+				loader: null
             },
 			form: {
 				main: null
@@ -41,7 +49,8 @@
 					confirm: "confirm",
 					input: "input",
 					textarea: "textarea",
-					number: "number"
+					number: "number",
+					uploadFile: "uploadFile"
 				}
 			}
 		},
@@ -252,6 +261,13 @@
 				};
 			}, 300);
 			this.timer.start();
+		},
+		getCountSymbols: function(text, regexp){
+			var count = 0;
+			while ((myArray = regexp.exec(text)) != null) {
+				count++;
+			};
+			return count;
 		}
     };
 
@@ -1360,6 +1376,7 @@
 					$(parent).addClass(options.classes.join(" "));
 					//set text
 					SelfObj.setText(options.text);
+					var buttonHolder = SelfObj.buttonHolder = cwe("span","class,button-holder",parent);
 					//set click
 					$(parent).click(function(e){
 						options.click(e, SelfObj);
@@ -1398,6 +1415,7 @@
 					enableHotKey: true
 				};
 				this.htmlElement = null;
+				this.buttonHolder = null;
 
 				//METHODS
 				this.setText = function(text){
@@ -1468,6 +1486,7 @@
 			//options
 			$.extend(true, options, {
 				holder: document.body,
+				element: null,
 				items: [
 					{
 						name: "pages",
@@ -1488,7 +1507,7 @@
 						order: 2
 					},
 					{
-						name: "uaseragents",
+						name: "useragents",
 						text: lng.useragents,
 						show: true,
 						order: 4
@@ -1534,6 +1553,8 @@
 					};
 				});
 				SelfObj.setTextAndValue(_items);
+
+				SelfObj.reload();
 			};
 
 			//PROPERTYS
@@ -1555,6 +1576,27 @@
 						};
 						if(data.value != null) $(SelfObj.items[key].value).text(data.value);
 					};
+				});
+			};
+			this.setElement = function(element){
+				options.element = element;
+			};
+			this.reload = function(){
+				if(options.element == null) return;
+
+				SelfObj.setTextAndValue({
+					pages: {
+						value: options.element.getPages().getCount()
+					},
+					referers: {
+						value: options.element.getReferers().getCount()
+					},
+					paths: {
+						value: options.element.getPaths().getCount()
+					},
+					useragents: {
+						value: options.element.getUserAgents().getCount()
+					}
 				});
 			};
 
@@ -1617,6 +1659,9 @@
 				$.extend(true, options, {
 					onClick: onClick
 				});
+			};
+			this.click = function(){
+				$(SelfObj.htmlElement).click();
 			};
 
 			this.destroy = proto.destroy;
@@ -1921,6 +1966,180 @@
 			this.toogle = proto.toogle;
 
 			proto.init(opt, param);
+		},
+		loader: function(opt, param){
+			var proto = new Proto(),
+				options = proto.options,
+				SelfObj = this,
+				_const = {};
+
+			//options
+			$.extend(true, options, {
+				holder: document.body
+			});
+
+			proto.constructor = function(){
+				var parent = proto.htmlNodes.main[0] = SelfObj.htmlElement = cwe("div","id,loader",options.holder);
+			};
+
+			//PROPERTYS
+			this.state = {};
+			this.htmlElement = null;
+
+			//METHODS
+			this.destroy = proto.destroy;
+			this.show = proto.show;
+			this.hide = proto.hide;
+			this.toogle = proto.toogle;
+
+			proto.init(opt, param);
+		},
+		selectFile: function(opt, param){
+			var proto = new Proto(),
+				options = proto.options,
+				SelfObj = this,
+				lng = g.lng.control.selectFile,
+				_const = {};
+
+			//options
+			$.extend(true, options, {
+				holder: document.body,
+				flashUrl: g.options.basePath + "swfupload/swfupload.swf",
+				uploadUrl: "",
+				fileTypes : "*.*",
+				fileTypesDescription : lng.allFiles,
+				postParams: {},
+				filePostName : "Filedata",
+				callback: function(data){}
+			});
+
+			proto.constructor = function(){
+				var btnId = "uploadButton_"+ g.utils.randomInt(1,9999);
+				var parent = proto.htmlNodes.main[0] = SelfObj.htmlElement = cwe("div","class,checkfile",options.holder);
+
+				var buttonContainer = new g.control.buttonContainer({
+					holder: parent,
+					buttons: {
+						selectFile: {
+							enable: true,
+							order: 1,
+							text: lng.selectFile,
+							classes: ["file"],
+							click: function(e, button){},
+							hotKey: [],
+							tooltip: ""
+						}
+					}
+				},{visible: true});
+				var btnUpload = buttonContainer.getButton("selectFile");
+				$(btnUpload.buttonHolder).attr("id", btnId);
+				var fileInfo = proto.htmlNodes.fileInfo = cwe("span","class,fileinfo",parent);
+
+				SelfObj.setSelectedFile(false);
+
+				init_uploader();
+				function init_uploader(){
+					proto.data.swfu = new SWFUpload({
+						flash_url : options.flashUrl,
+						upload_url: options.uploadUrl,
+						file_types : options.fileTypes,
+						file_types_description : options.fileTypesDescription,
+						post_params: options.postParams,
+						file_post_name : options.filePostName,
+						debug: false,
+
+						// Button settings
+						button_width: $(btnUpload.htmlElement).outerWidth(),
+						button_height: $(btnUpload.htmlElement).outerHeight(),
+						button_placeholder_id: btnId,
+						button_window_mode: SWFUpload.WINDOW_MODE.TRANSPARENT,
+						button_cursor: SWFUpload.CURSOR.HAND,
+
+						// The event handler functions are defined in handlers.js
+						file_dialog_complete_handler: function(numFilesSelected, numFilesQueued){
+							try{
+								if(numFilesQueued > 0){
+									for(var i=0;i<getCountAllFiles(this)-1;i++) this.cancelUpload(this.getFile(i)["id"]);
+                                    SelfObj.setSelectedFile(this.getFile(getCountAllFiles(this)-1)["name"]);
+								};
+							}catch(ex){};
+						},
+						upload_progress_handler     : function(file, bytesLoaded, bytesTotal){
+							try{}catch(ex){};
+						},
+						upload_success_handler      : function(file, serverData){
+							try{
+								options.callback(serverData);
+							}catch(ex){};
+						},
+						upload_error_handler        : function(file, errorCode, message){
+							try{
+								switch (errorCode){
+									case SWFUpload.QUEUE_ERROR.QUEUE_LIMIT_EXCEEDED:
+										break;
+									case SWFUpload.QUEUE_ERROR.ZERO_BYTE_FILE:
+										break;
+									case SWFUpload.QUEUE_ERROR.FILE_EXCEEDS_SIZE_LIMIT:
+										break;
+									case SWFUpload.QUEUE_ERROR.INVALID_FILETYPE:
+										break;
+									default:
+										break;
+								};
+							}catch(ex){};
+						},
+						upload_complete_handler     : function(){
+							if (this.getStats().files_queued == 0){
+								proto.data.swfu.setButtonDisabled(false);
+                                SelfObj.setSelectedFile(false);
+								g.data.control.loader.hide({effect: true});
+							};
+						}
+					});
+				};
+			};
+			function getCountAllFiles(swfu){
+				var out = 0;
+				$.each(swfu.getStats(), function(key, val){
+					out += val;
+				});
+				return out;
+			};
+
+			//PROPERTYS
+			this.state = {
+				selectedFile: false
+			};
+			this.htmlElement = null;
+
+			//METHODS
+			this.setSelectedFile = function(text){
+				if(text){
+                    $(proto.htmlNodes.fileInfo).text(text);
+                    SelfObj.state.selectedFile = true;
+                }else{
+                    $(proto.htmlNodes.fileInfo).text(lng.notSelectedFile);
+                    SelfObj.state.selectedFile = false;
+                };
+			};
+			this.startUpload = function(){
+				proto.data.swfu.setButtonDisabled(true);
+				g.data.control.loader.show({effect: true});
+				proto.data.swfu.startUpload();
+			};
+			this.stopUpload = function(){
+				for(var i=0;i<getCountAllFiles(proto.data.swfu);i++) proto.data.swfu.cancelUpload(proto.data.swfu.getFile(i)["id"]);
+				proto.data.swfu.setButtonDisabled(false);
+                SelfObj.setSelectedFile(false);
+				g.data.control.loader.hide({effect: true});
+			};
+
+			this.destroy = proto.destroy;
+			this.show = proto.show;
+			this.hide = proto.hide;
+			this.toogle = proto.toogle;
+
+			proto.init(opt, param);
 		}
     };
 
@@ -1938,12 +2157,14 @@
 						confirm: "confirm",
 						input: "input",
 						textarea: "textarea",
-						number: "number"
+						number: "number",
+						uploadFile: "uploadFile"
 					},
 					input: {
 						input: "input",
 						textarea: "textarea",
-						number: "number"
+						number: "number",
+						selectFile: "selectFile"
 					}
 				};
 
@@ -2036,14 +2257,18 @@
 										value: getParam("data.value"),
 										checkData: (getParam("data.allowEmpty") ? false: true),
 										minLength: (getParam("data.allowEmpty") ? 0: 1),
-										maxLength: 9999
+										maxLength: 9999,
+										placeholder: getParam("data.placeholder"),
+										regexp: getParam("data.regexp")
 									},{visible: true});
 								}
 							}
 						],
 						data: {
 							value: "",
-							allowEmpty: true
+							allowEmpty: true,
+							placeholder: "",
+							regexp: /^.*$/
 						}
 					};
 				},
@@ -2063,17 +2288,21 @@
 							}
 						},
 						controls: [
-							//textline
+							//textarea
 							{
-								name: _const.input.input,
+								name: _const.input.textarea,
 								control: function(holder){
 									return new g.control.textarea({
 										holder: holder,
-										focus: true
+										focus: true,
+										value: getParam("data.value")
 									},{visible: true});
 								}
 							}
-						]
+						],
+						data: {
+							valule: ""
+						}
 					};
 				},
 				number: function(){
@@ -2109,6 +2338,48 @@
 						],
 						data: {
 							value: 0
+						}
+					};
+				},
+				uploadFile: function(){
+					return {
+						buttons: {
+							ok: {
+								enable: true,
+								text: lng.buttons.ok.text,
+								classes: ["save"],
+								hotKey: ["13"]
+							},
+							cancel: {
+								enable: true,
+								text: lng.buttons.cancel.text,
+								classes: ["cancel"]
+							}
+						},
+						controls: [
+							//select file
+							{
+								name: _const.input.selectFile,
+								control: function(holder){
+									return new g.control.selectFile({
+										holder: holder,
+										uploadUrl: getParam("data.uploadUrl"),
+										fileTypes: getParam("data.fileTypes"),
+										fileTypesDescription: getParam("data.fileTypesDescription"),
+										postParams: getParam("data.postParams"),
+										filePostName: getParam("data.filePostName"),
+										callback: getParam("data.callback")
+									},{visible: true});
+								}
+							}
+						],
+						data: {
+							uploadUrl: "",
+							fileTypes : "*.*",
+							fileTypesDescription : "",
+							postParams: {},
+							filePostName : "Filedata",
+							callback: function(data){}
 						}
 					};
 				}
@@ -2334,6 +2605,99 @@
 								};
 								tags[g.const.attr.tooltip] = lng.goToStart;
 								var toStart = cwe("a",tags,logo);
+							//INFO AREA
+							var infoArea = proto.htmlNodes.infoArea = $(cwe("div","id,infoarea",boxWrap_header)).hide()[0];
+								var infoArea_info = cwe("div","class,info",infoArea);
+								var infoArea_holder_1 = cwe("tbody","",cwe("table","class,projectinfo",infoArea_info));
+								var tr_1 = cwe("tr","",infoArea_holder_1),
+									tr_2 = cwe("tr","",infoArea_holder_1);
+								$(cwe("td","class,name",tr_1)).html(lng.projectName);
+								proto.htmlNodes.projectName = cwe("td","class,value",tr_1);
+								$(cwe("td","class,name",tr_2)).html(lng.fileSize);
+								proto.htmlNodes.fileSize = cwe("td","class,value",tr_2);
+								var div_options = cwe("div","class,options",infoArea);
+								var icon_renameProject = new g.control.icon({
+									holder: div_options,
+									classes: ["rename"],
+									tooltip: lng.icons.rename.tooltip,
+									onClick: function(icon){
+										var msg = new g.form.messageBox({type: g.const.form.messageBox.type.input},{visible: false},{
+											input: {
+												title: lng.msg.renameProject.title,
+												text: lng.msg.renameProject.text,
+												onClick: {
+													ok: function(msg){
+														SelfObj.infoArea.setNameProject(msg.areaset.getControl(msg.input.input).getValue());
+
+														msg.destroy();
+													}
+												},
+												data: {
+													value: g.es.getProjectName()
+												}
+											}
+										});
+										msg.show({effect: true});
+									}
+								},{visible: true});
+								var icon_downloadZip = new g.control.icon({
+									holder: div_options,
+									classes: ["download_zip"],
+									tooltip: lng.icons.download_zip.tooltip,
+									onClick: function(icon){
+                                        g.data.control.loader.show({
+                                            callback: function(){
+                                                $.post(g.options.url.downloadESFile, {
+                                                    json: g.es.getJSON(),
+                                                    zip: true
+                                                },function(data){
+                                                    g.data.control.loader.hide();
+                                                    try{
+                                                        data = $.evalJSON(data);
+                                                        window.location.href=data.url
+                                                    }catch(e){
+                                                        var msg = new g.form.messageBox({type: g.const.form.messageBox.type.error},{visible: false},{
+                                                            error: {
+                                                                title: lng.msg.errorDownloadES.title,
+                                                                text: lng.msg.errorDownloadES.text
+                                                            }
+                                                        });
+                                                        msg.show({effect: true});
+                                                    };
+                                                });
+                                            }
+                                        });
+									}
+								},{visible: true});
+								var icon_downloadFile = new g.control.icon({
+									holder: div_options,
+									classes: ["download_file"],
+									tooltip: lng.icons.download_file.tooltip,
+									onClick: function(icon){
+                                        g.data.control.loader.show({
+                                            callback: function(){
+                                                $.post(g.options.url.downloadESFile, {
+                                                    json: g.es.getJSON()
+                                                },function(data){
+                                                    g.data.control.loader.hide();
+                                                    try{
+                                                        data = $.evalJSON(data);
+                                                        window.location.href=data.url
+                                                    }catch(e){
+                                                        var msg = new g.form.messageBox({type: g.const.form.messageBox.type.error},{visible: false},{
+                                                            error: {
+                                                                title: lng.msg.errorDownloadES.title,
+                                                                text: lng.msg.errorDownloadES.text
+                                                            }
+                                                        });
+                                                        msg.show({effect: true});
+                                                    };
+                                                });
+                                            }
+                                        });
+									}
+								},{visible: true});
+							///////////
 							cwe("div","class,cleared",boxWrap_header);
 				//main
 					var main = cwe("div","id,main",parent);
@@ -2360,7 +2724,6 @@
 							});
 							$(cwe("div","class,copy",boxWrap_footer)).html("&copy; " + new Date().getFullYear() + " ESGenerator");
 			};
-
 
 			//PROPERTYS
 			this.state = {};
@@ -2398,6 +2761,37 @@
 					});
 				};
 			};
+			this.infoArea = {
+				setVisible: function(state){
+					if(state){
+						$(proto.htmlNodes.infoArea).show();
+					}else{
+						$(proto.htmlNodes.infoArea).hide();
+					};
+				},
+				setNameProject: function(text){
+					g.es.setProjectName(text);
+					$(proto.htmlNodes.projectName).text(((typeof g.es.getProjectName()) == "string" && g.es.getProjectName().length > 0) ? g.es.getProjectName() : lng.unNamedProject);
+				},
+				setSize: function(bytes){
+					var out = bytes,
+						type = lng.byte;
+
+					//mb
+					if(bytes / (1024 * 1024) > 1){
+						out = (bytes / (1024 * 1024)).toFixed(2);
+						type = lng.megabyte;
+					}else if(bytes / 1024 > 1){//kb
+						out = (bytes / (1024)).toFixed(2);
+						type = lng.kilobyte;
+					}else{//byte
+						out = bytes.toFixed(2);
+						type = lng.byte;
+					};
+
+					$(proto.htmlNodes.fileSize).html(out + " " + type);
+				}
+			};
 
 			this.destroy = proto.destroy;
 			this.show = proto.show;
@@ -2422,17 +2816,30 @@
 						text: lng.menuItems.createNew.text,
 						"class": "new",
 						onClick: function(){
-							g.es = new wa_extSource({},{});
-							for(var i=1;i<=3;i++){
-								g.es.getItems().addRaw("Item #"+i);
-							};
-							g.data.form.main.setActiveForm({
-								form: function(holder){
-									return new g.form.editor({
-										holder: holder
-									},{visible: false});
+							var msg = new g.form.messageBox({type: g.const.form.messageBox.type.input},{visible: false},{
+								input: {
+									title: lng.msg.setNameProject.title,
+									text: lng.msg.setNameProject.text,
+									onClick: {
+										ok: function(msg){
+											g.es = new wa_extSource({},{
+												onChange: g.options.callback_esUpdate
+											});
+											g.es.setProjectName(msg.areaset.getControl(msg.input.input).getValue());
+											g.data.form.main.setActiveForm({
+												form: function(holder){
+													return new g.form.editor({
+														holder: holder
+													},{visible: false});
+												}
+											});
+
+											msg.destroy();
+										}
+									}
 								}
 							});
+							msg.show({effect: true});
 						},
 						order: 1,
 						enable: true
@@ -2442,7 +2849,66 @@
 						text: lng.menuItems.downloadFromUrl.text,
 						"class": "url",
 						onClick: function(){
-							alert(g.lng.other.functionalityIsNotAvailable);
+							var msg = new g.form.messageBox({type: g.const.form.messageBox.type.input},{visible: false},{
+								input: {
+									title: lng.msg.uploadFromUrl.title,
+									text: lng.msg.uploadFromUrl.text,
+									onClick: {
+										ok: function(msg){
+											msg.errorHide();
+
+											msg.areaset.getControl(msg.input.input).checkValue();
+											if(msg.areaset.getControl(msg.input.input).state.error){
+												msg.errorShow(lng.msg.uploadFromUrl.badUrl);
+												msg.areaset.getControl(msg.input.input).focus(true);
+												return;
+											};
+
+											g.data.control.loader.show({
+												callback: function(){
+													$.post(g.options.url.uploadFromUrl, {
+														url: msg.areaset.getControl(msg.input.input).getValue()
+													}, function(data){
+														g.data.control.loader.hide({
+															callback: function(){
+																if(data && data.length > 0){
+																	try{
+																		var d = "";
+																		eval("d="+data);
+
+																		g.es = new wa_extSource(d,{
+																			onChange: g.options.callback_esUpdate
+																		});
+																		g.data.form.main.setActiveForm({
+																			form: function(holder){
+																				return new g.form.editor({
+																					holder: holder
+																				},{visible: false});
+																			}
+																		});
+
+																		msg.destroy();
+																	}catch(e){
+																		msg.errorShow(lng.msg.uploadFromUrl.notValidJSON);
+																	};
+																}else{
+																	msg.errorShow(lng.msg.uploadFromUrl.failedLoadFromUrl);
+																};
+															}
+														});
+													});
+												}
+											});
+										}
+									},
+									data: {
+										placeholder: "http://",
+										allowEmpty: false,
+										regexp: /^(http|https|ftp)(:\/\/)((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})|(([a-zA-Zа-яА-Я0-9\-]*\.)+[a-zA-Zа-яА-Я]{2,6}))(\/{1}.{1,})?$/
+									}
+								}
+							});
+							msg.show({effect: true});
 						},
 						order: 2,
 						enable: true
@@ -2452,7 +2918,57 @@
 						text: lng.menuItems.upload.text,
 						"class": "file",
 						onClick: function(){
-							alert(g.lng.other.functionalityIsNotAvailable);
+							var msg = new g.form.messageBox({type: g.const.form.messageBox.type.uploadFile},{visible: false},{
+								uploadFile: {
+									title: lng.msg.uploadFromPC.title,
+									text: lng.msg.uploadFromPC.text,
+									data: {
+										uploadUrl: g.options.url.uploadFromPC,
+										fileTypes : "*.txt;*.zip",
+										fileTypesDescription : "",
+										postParams: {},
+										filePostName : "es",
+										callback: function(data){
+											if(data && data.length > 0){
+												try{
+													var d = "";
+													eval("d="+data);
+
+													g.es = new wa_extSource(d,{
+														onChange: g.options.callback_esUpdate
+													});
+													g.data.form.main.setActiveForm({
+														form: function(holder){
+															return new g.form.editor({
+																holder: holder
+															},{visible: false});
+														}
+													});
+
+													msg.destroy();
+												}catch(e){
+													msg.errorShow(lng.msg.uploadFromPC.notValidJSON);
+												};
+											}else{
+												msg.errorShow(lng.msg.uploadFromPC.failedLoadFromPC);
+											};
+										}
+									},
+									onClick: {
+										ok: function(msg){
+											msg.errorHide();
+
+											if(!msg.areaset.getControl(msg.input.selectFile).state.selectedFile){
+												msg.errorShow(lng.msg.uploadFromPC.notSelectedFile);
+												return;
+											};
+
+											msg.areaset.getControl(msg.input.selectFile).startUpload();
+										}
+									}
+								}
+							});
+							msg.show({effect: true});
 						},
 						order: 3,
 						enable: true
@@ -2476,7 +2992,6 @@
 					$(cwe("p","",container)).text(val.text);
 				});
 			};
-
 
 			//PROPERTYS
 			this.state = {};
@@ -2609,11 +3124,19 @@
 					text: lng.leftMenu.setElemets,
 					onClick: function(list){
 						leftMenu_setActiveItem(list);
+						SelfObj.itemInfo.hide();
 
 						//set form
 						SelfObj.setActiveForm({
 							form: function(holder){
-								return new form_setElements({holder: holder}, {visible: false});
+								return new form_setElements({
+									holder: holder,
+									callback_selectElement: function(element){
+										SelfObj.itemInfo.setElement(element);
+										SelfObj.itemInfo.reload();
+										SelfObj.itemInfo.show();
+									}
+								}, {visible: false});
 							}
 						});
 					}
@@ -2624,6 +3147,7 @@
 					text: lng.leftMenu.exMasks,
 					onClick: function(list){
 						leftMenu_setActiveItem(list);
+						SelfObj.itemInfo.hide();
 
 						//set form
 						SelfObj.setActiveForm({
@@ -2639,6 +3163,7 @@
 					text: lng.leftMenu.adressReport,
 					onClick: function(list){
 						leftMenu_setActiveItem(list);
+						SelfObj.itemInfo.hide();
 
 						//set form
 						SelfObj.setActiveForm({
@@ -2662,6 +3187,10 @@
 
 				//run default action
 				$(SelfObj.items.left.leftMenu.setElemets.htmlElement).click();
+
+				g.data.form.main.infoArea.setNameProject(g.es.getProjectName());
+				g.data.form.main.infoArea.setSize(SelfObj.getSize());
+				g.data.form.main.infoArea.setVisible(true);
 			};
 
 			//right forms
@@ -2674,7 +3203,8 @@
 
 				//options
 				$.extend(true, options, {
-					holder: document.body
+					holder: document.body,
+					callback_selectElement: function(element){}
 				});
 
 				proto.constructor = function(){
@@ -2805,7 +3335,8 @@
 						},
 						element: null,
 						callback_remove: function(){},
-						callback_checkbox: function(){}
+						callback_checkbox: function(){},
+						callback_selectElement: function(element){}
 					});
 
 					proto.constructor = function(){
@@ -2910,6 +3441,15 @@
 						});
 						$(name).click(function(e){
 							e.stopPropagation();
+							options.callback_selectElement(options.element);
+							g.data.form.main.activeForm.setActiveForm({
+								form: function(holder){
+									return new form_element({
+										holder: holder,
+										element: options.element
+									},{visible: false});
+								}
+							});
 						});
 						$(parent).click(function(e){
 							$(checkBox).click();
@@ -2992,7 +3532,8 @@
 
 								proto.htmlNodes.checkBox_all.checked = checkAll;
 								SelfObj.groupButtonVisibleState(checkOneOrMore);
-							}
+							},
+							callback_selectElement: options.callback_selectElement
 						},{visible: true})
 					);
 				};
@@ -3619,6 +4160,1705 @@
 
 				proto.init(opt, param);
 			};
+			function form_element(opt, param){
+				var proto = new Proto(),
+					options = proto.options,
+					SelfObj = this,
+					lng = g.lng.form.editor.form.element,
+					_const = {
+						itemList: {
+							"class": {
+								active: "active"
+							}
+						}
+					};
+
+				//options
+				$.extend(true, options, {
+					holder: document.body,
+					element: null,
+					items: [
+						{
+							name: "pages",
+							text: lng.itemList.pages,
+							onClick: function(item, form){
+								//set active
+								items_setActiveItem(item);
+
+								SelfObj.setActiveForm({
+									form: function(holder){
+										return new form_pages({
+											holder: holder,
+											element: options.element.getPages()
+										},{visible: false});
+									}
+								});
+							},
+							order: 1,
+							show: true
+						},
+						{
+							name: "paths",
+							text: lng.itemList.paths,
+							onClick: function(item, form){
+								//set active
+								items_setActiveItem(item);
+
+								SelfObj.setActiveForm({
+									form: function(holder){
+										return new form_paths({
+											holder: holder,
+											element: options.element.getPaths()
+										},{visible: false});
+									}
+								});
+							},
+							order: 2,
+							show: true
+						},
+						{
+							name: "referers",
+							text: lng.itemList.referers,
+							onClick: function(item, form){
+								//set active
+								items_setActiveItem(item);
+
+								SelfObj.setActiveForm({
+									form: function(holder){
+										return new form_referers({
+											holder: holder,
+											element: options.element.getReferers()
+										},{visible: false});
+									}
+								});
+							},
+							order: 3,
+							show: true
+						},
+						{
+							name: "useragents",
+							text: lng.itemList.useragents,
+							onClick: function(item, form){
+								//set active
+								items_setActiveItem(item);
+
+								SelfObj.setActiveForm({
+									form: function(holder){
+										return new form_useragents({
+											holder: holder,
+											element: options.element.getUserAgents()
+										},{visible: false});
+									}
+								});
+							},
+							order: 4,
+							show: true
+						}
+					]
+				});
+
+				proto.constructor = function(){
+					var parent = SelfObj.htmlElement = proto.htmlNodes.main[0] = cwe("div","class,itemlist",options.holder),
+						parent_2 = proto.htmlNodes.main[1] = cwe("div","",options.holder);
+
+					//select and generate items
+					var items = [];
+					$.each(options.items, function(key, cfg){
+						if(cfg.show) items.push(cfg);
+					});
+					items.sort(function(a,b){return a.order- b.order;});
+					$.each(items, function(key, cfg){
+						SelfObj.items[cfg.name] = new g.control.list({
+							holder: parent,
+							text: cfg.text,
+							onClick: function(item){
+								cfg.onClick(item, SelfObj);
+							}
+						},{visible: true});
+					});
+
+					//click default item
+					SelfObj.items["pages"].click();
+				};
+				//function set active
+				function items_setActiveItem(menuItem){
+					$.each(SelfObj.items, function(key, item){
+						//set not active
+						$(item.htmlElement).removeClass(_const.itemList["class"].active);
+
+						//set active
+						if(menuItem == item) $(menuItem.htmlElement).addClass(_const.itemList["class"].active);
+					});
+				};
+				//forms
+				function form_pages(opt, param){
+					var proto = new Proto(),
+						options = proto.options,
+						SelfObj = this,
+						lng = g.lng.form.editor.form.element.form.pages,
+						_const = {};
+
+					//options
+					$.extend(true, options, {
+						holder: document.body,
+						element: null
+					});
+
+					proto.constructor = function(){
+						var parent = SelfObj.htmlElement = proto.htmlNodes.main[0] = cwe("div","class,itemarea",options.holder);
+						proto.htmlNodes.main[1] = cwe("div","class,cleared",options.holder);
+						var listOption = cwe("div","class,listoption",parent);
+						var list_priority = proto.data.btnPriority = new g.control.list({
+							holder: listOption,
+							text: lng.listOption.priority.text,
+							classes: ["priority"],
+							onClick: function(list){
+								var msg = new g.form.messageBox({type: g.const.form.messageBox.type.number},{visible: false},{
+									number: {
+										title: lng.msg.setPriority.title,
+										text: lng.msg.setPriority.text,
+										data: {
+											value: 1
+										},
+										onClick: {
+											ok: function(msg){
+												msg.errorHide();
+
+												if(msg.areaset.getControl(msg.input.number).state.error){
+													msg.errorShow(lng.msg.setPriority.error);
+													msg.areaset.getControl(msg.input.number).focus(true);
+													return;
+												};
+
+												$.each(getCheckedFormItems(SelfObj.items), function(key, item){
+													item.setPriority(msg.areaset.getControl(msg.input.number).getValue());
+													item.setChecked(false);
+												});
+
+												proto.htmlNodes.checkBox_all.checked = false;
+												SelfObj.groupButtonVisibleState(false);
+
+												msg.destroy();
+											}
+										}
+									}
+								});
+								msg.show({effect: true});
+							}
+						},{visible: false});
+						var list_delete = proto.data.btnDelete = new g.control.list({
+							holder: listOption,
+							text: lng.listOption["delete"].text,
+							classes: ["delete"],
+							onClick: function(list){
+								var msg = new g.form.messageBox({type: g.const.form.messageBox.type.confirm},{visible: false},{
+									confirm: {
+										title: lng.msg.removeItems.title,
+										text: lng.msg.removeItems.text,
+										onClick: {
+											ok: function(msg){
+												msg.destroy({callback: function(){
+													$.each(getCheckedFormItems(SelfObj.items), function(key, item){
+														item.destroy();
+													});
+
+													proto.htmlNodes.checkBox_all.checked = false;
+													SelfObj.groupButtonVisibleState(false);
+												}});
+											}
+										}
+									}
+								});
+								msg.show({effect: true});
+							}
+						},{visible: false});
+						var btn_add = new g.control.button({
+							holder: listOption,
+							text: lng.listOption.add.text,
+							classes: ["add"],
+							onClick: function(list){
+								var msg = new g.form.messageBox({type: g.const.form.messageBox.type.textarea},{visible: false},{
+									textarea: {
+										title: lng.msg.add.title,
+										text: lng.msg.add.text,
+										onClick: {
+											ok: function(msg){
+												$.each(msg.areaset.getControl(msg.input.textarea).getValue(), function(key, text){
+													if(text.length > 0) SelfObj.addItemRaw(text, options.element);
+												});
+
+												msg.destroy();
+											}
+										}
+									}
+								});
+								msg.show({effect: true});
+							}
+						},{visible: true});
+
+						var listArea = cwe("div","class,listarea",parent);
+						var listTable = cwe("table","class,listtable",listArea);
+						var listTable_header = cwe("tr","",cwe("thead","",listTable));
+						var checkBox = proto.htmlNodes.checkBox_all = cwe("input","type,checkbox",cwe("td","class,checkbx",listTable_header));
+						$(cwe("td","class,name",listTable_header)).text(lng.listTable.name.text);
+						$(cwe("td","class,priority",listTable_header)).text(lng.listTable.priority.text);
+						$(cwe("td","class,option",listTable_header)).text(lng.listTable.option.text);
+						var listTable_body = proto.htmlNodes.itemHolder = cwe("tbody","",listTable);
+
+						//set events
+						$(checkBox).click(function(e){
+							$.each(SelfObj.items, function(key, item){
+								item.setChecked(e.target.checked);
+								SelfObj.groupButtonVisibleState(e.target.checked);
+							});
+						});
+
+						//set items
+						$.each(options.element.get(), function(key, item){
+							SelfObj.addItem(item, options.element);
+						});
+					};
+
+					function Item(opt, param){
+						var proto = new Proto(),
+							options = proto.options,
+							SelfObj = this,
+							lng = g.lng.form.editor.form.element.form.pages,
+							_const = {};
+
+						//options
+						$.extend(true, options, {
+							holder: document.body,
+							"class": {
+								checked: "checked"
+							},
+							element: null,
+							parentElement: null,
+							callback_remove: function(){},
+							callback_checkbox: function(){}
+						});
+
+						proto.constructor = function(){
+							var parent = SelfObj.htmlElement = proto.htmlNodes.main[0] = cwe("tr","",options.holder);
+							var checkBox = proto.htmlNodes.checkBox = cwe("input","type,checkbox",cwe("td","class,checkbx",parent));
+							var name = proto.htmlNodes.name = cwe("span","class,elink",cwe("td","class,name",parent));
+							var priority = proto.htmlNodes.priority = cwe("td","class,priority",parent);
+							var option = cwe("td","class,option",parent);
+
+							var icon_edit = new g.control.icon({
+								holder: option,
+								iconSize: 16,
+								classes: ["edit"],
+								tooltip: lng.listTable.option.icons.edit.tooltip,
+								onClick: function(icon){
+									var msg = new g.form.messageBox({type: g.const.form.messageBox.type.input},{visible: false},{
+										input: {
+											title: lng.msg.edit.title,
+											text: lng.msg.edit.text,
+											data: {
+												value: SelfObj.getPage()
+											},
+											onClick: {
+												ok: function(msg){
+													SelfObj.setPage(msg.areaset.getControl(msg.input.input).getValue());
+
+													msg.destroy();
+												}
+											}
+										}
+									});
+									msg.show({effect: true});
+								}
+							},{visible: true});
+							var icon_priority = new g.control.icon({
+								holder: option,
+								iconSize: 16,
+								classes: ["priority"],
+								tooltip: lng.listTable.option.icons.priority.tooltip,
+								onClick: function(icon){
+									var msg = new g.form.messageBox({type: g.const.form.messageBox.type.number},{visible: false},{
+										number: {
+											title: lng.msg.setPriority.title,
+											text: lng.msg.setPriority.text,
+											data: {
+												value: SelfObj.getPriority()
+											},
+											onClick: {
+												ok: function(msg){
+													msg.errorHide();
+
+													if(msg.areaset.getControl(msg.input.number).state.error){
+														msg.errorShow(lng.msg.setPriority.error);
+														msg.areaset.getControl(msg.input.number).focus(true);
+														return;
+													};
+
+													SelfObj.setPriority(msg.areaset.getControl(msg.input.number).getValue());
+
+													msg.destroy();
+												}
+											}
+										}
+									});
+									msg.show({effect: true});
+								}
+							},{visible: true});
+							var icon_delete = new g.control.icon({
+								holder: option,
+								iconSize: 16,
+								classes: ["delete"],
+								tooltip: lng.listTable.option.icons["delete"].tooltip,
+								onClick: function(icon){
+									var msg = new g.form.messageBox({type: g.const.form.messageBox.type.confirm},{visible: false},{
+										confirm: {
+											title: lng.msg.removeItem.title,
+											text: lng.msg.removeItem.text,
+											onClick: {
+												ok: function(msg){
+													msg.destroy({callback: function(){
+														SelfObj.destroy();
+													}});
+												}
+											}
+										}
+									});
+									msg.show({effect: true});
+								}
+							},{visible: true});
+
+							//set name & priority
+							SelfObj.setPage(SelfObj.getPage());
+							SelfObj.setPriority(SelfObj.getPriority());
+
+							//set events
+							$(checkBox).click(function(e){
+								e.stopPropagation();
+							});
+							$(checkBox).change(function(e){
+								SelfObj.setChecked(e.target.checked);
+								options.callback_checkbox();
+							});
+							$(name).click(function(e){
+								e.stopPropagation();
+								icon_edit.click();
+							});
+							$(parent).click(function(e){
+								$(checkBox).click();
+							});
+						};
+
+						//PROPERTYS
+						this.state = {
+							checked: false
+						};
+						this.htmlElement = null;
+
+						//METHODS
+						this.getPage = function(){
+							return options.element.getPage();
+						};
+						this.getPriority = function(){
+							return options.element.getPriority();
+						};
+						this.getElement = function(){
+							return options.element;
+						};
+						this.setPage = function(page){
+							options.element.setPage(page);
+							$(proto.htmlNodes.name).text(SelfObj.getPage());
+						};
+						this.setPriority = function(priority){
+							options.element.setPriority(priority);
+							$(proto.htmlNodes.priority).text(SelfObj.getPriority());
+						};
+						this.setChecked = function(state){
+							if(state){
+								SelfObj.state.checked = true;
+								proto.htmlNodes.checkBox.checked = true;
+								$(SelfObj.htmlElement).addClass(options["class"].checked);
+							}else{
+								SelfObj.state.checked = false;
+								proto.htmlNodes.checkBox.checked = false;
+								$(SelfObj.htmlElement).removeClass(options["class"].checked);
+							};
+						};
+
+						this.destroy = function(){
+							options.parentElement.remove(options.element);
+							options.callback_remove(SelfObj);
+							proto.destroy();
+						};
+						this.show = proto.show;
+						this.hide = proto.hide;
+						this.toogle = proto.toogle;
+
+						proto.init(opt, param);
+					};
+
+					//PROPERTYS
+					this.state = {};
+					this.htmlElement = null;
+					this.items = [];
+
+					//METHODS
+					this.addItem = function(item, parentElement){
+						SelfObj.items.push(
+							new Item({
+								holder: proto.htmlNodes.itemHolder,
+								element: item,
+								parentElement: parentElement,
+								callback_remove: function(item){
+									SelfObj.removeItem(item);
+								},
+								callback_checkbox: function(){
+									var checkAll = true,
+										checkOneOrMore = false;
+
+									$.each(SelfObj.items, function(key, item){
+										if(!item.state.checked){
+											checkAll = false;
+										}else{
+											checkOneOrMore = true;
+										};
+									});
+
+									proto.htmlNodes.checkBox_all.checked = checkAll;
+									SelfObj.groupButtonVisibleState(checkOneOrMore);
+								}
+							},{visible: true})
+						);
+					};
+					this.addItemRaw = function(text, parentElement){
+						SelfObj.addItem(options.element.addRaw(text), parentElement);
+					};
+					this.removeItem = function(item){
+						var index = $.inArray(item, SelfObj.items);
+						if(index != -1){
+							SelfObj.items.splice(index, 1);
+						};
+					};
+					this.groupButtonVisibleState = function(state){
+						if(state){
+							proto.data.btnPriority.show();
+							proto.data.btnDelete.show();
+						}else{
+							proto.data.btnPriority.hide();
+							proto.data.btnDelete.hide();
+						};
+					};
+
+					this.destroy = proto.destroy;
+					this.show = proto.show;
+					this.hide = proto.hide;
+					this.toogle = proto.toogle;
+
+					proto.init(opt, param);
+				};
+				function form_referers(opt, param){
+					var proto = new Proto(),
+						options = proto.options,
+						SelfObj = this,
+						lng = g.lng.form.editor.form.element.form.referers,
+						_const = {};
+
+					//options
+					$.extend(true, options, {
+						holder: document.body,
+						element: null
+					});
+
+					proto.constructor = function(){
+						var parent = SelfObj.htmlElement = proto.htmlNodes.main[0] = cwe("div","class,itemarea",options.holder);
+						proto.htmlNodes.main[1] = cwe("div","class,cleared",options.holder);
+						var listOption = cwe("div","class,listoption",parent);
+						var list_priority = proto.data.btnPriority = new g.control.list({
+							holder: listOption,
+							text: lng.listOption.priority.text,
+							classes: ["priority"],
+							onClick: function(list){
+								var msg = new g.form.messageBox({type: g.const.form.messageBox.type.number},{visible: false},{
+									number: {
+										title: lng.msg.setPriority.title,
+										text: lng.msg.setPriority.text,
+										data: {
+											value: 1
+										},
+										onClick: {
+											ok: function(msg){
+												msg.errorHide();
+
+												if(msg.areaset.getControl(msg.input.number).state.error){
+													msg.errorShow(lng.msg.setPriority.error);
+													msg.areaset.getControl(msg.input.number).focus(true);
+													return;
+												};
+
+												$.each(getCheckedFormItems(SelfObj.items), function(key, item){
+													item.setPriority(msg.areaset.getControl(msg.input.number).getValue());
+													item.setChecked(false);
+												});
+
+												proto.htmlNodes.checkBox_all.checked = false;
+												SelfObj.groupButtonVisibleState(false);
+
+												msg.destroy();
+											}
+										}
+									}
+								});
+								msg.show({effect: true});
+							}
+						},{visible: false});
+						var list_delete = proto.data.btnDelete = new g.control.list({
+							holder: listOption,
+							text: lng.listOption["delete"].text,
+							classes: ["delete"],
+							onClick: function(list){
+								var msg = new g.form.messageBox({type: g.const.form.messageBox.type.confirm},{visible: false},{
+									confirm: {
+										title: lng.msg.removeItems.title,
+										text: lng.msg.removeItems.text,
+										onClick: {
+											ok: function(msg){
+												msg.destroy({callback: function(){
+													$.each(getCheckedFormItems(SelfObj.items), function(key, item){
+														item.destroy();
+													});
+
+													proto.htmlNodes.checkBox_all.checked = false;
+													SelfObj.groupButtonVisibleState(false);
+												}});
+											}
+										}
+									}
+								});
+								msg.show({effect: true});
+							}
+						},{visible: false});
+						var btn_add = new g.control.button({
+							holder: listOption,
+							text: lng.listOption.add.text,
+							classes: ["add"],
+							onClick: function(list){
+								var msg = new g.form.messageBox({type: g.const.form.messageBox.type.textarea},{visible: false},{
+									textarea: {
+										title: lng.msg.add.title,
+										text: lng.msg.add.text,
+										onClick: {
+											ok: function(msg){
+												$.each(msg.areaset.getControl(msg.input.textarea).getValue(), function(key, text){
+													if(text.length > 0) SelfObj.addItemRaw(text, options.element);
+												});
+
+												msg.destroy();
+											}
+										}
+									}
+								});
+								msg.show({effect: true});
+							}
+						},{visible: true});
+
+						var listArea = cwe("div","class,listarea",parent);
+						var listTable = cwe("table","class,listtable",listArea);
+						var listTable_header = cwe("tr","",cwe("thead","",listTable));
+						var checkBox = proto.htmlNodes.checkBox_all = cwe("input","type,checkbox",cwe("td","class,checkbx",listTable_header));
+						$(cwe("td","class,name",listTable_header)).text(lng.listTable.name.text);
+						$(cwe("td","class,priority",listTable_header)).text(lng.listTable.priority.text);
+						$(cwe("td","class,option",listTable_header)).text(lng.listTable.option.text);
+						var listTable_body = proto.htmlNodes.itemHolder = cwe("tbody","",listTable);
+
+						//set events
+						$(checkBox).click(function(e){
+							$.each(SelfObj.items, function(key, item){
+								item.setChecked(e.target.checked);
+								SelfObj.groupButtonVisibleState(e.target.checked);
+							});
+						});
+
+						//set items
+						$.each(options.element.get(), function(key, item){
+							SelfObj.addItem(item, options.element);
+						});
+					};
+
+					function Item(opt, param){
+						var proto = new Proto(),
+							options = proto.options,
+							SelfObj = this,
+							lng = g.lng.form.editor.form.element.form.referers,
+							_const = {};
+
+						//options
+						$.extend(true, options, {
+							holder: document.body,
+							"class": {
+								checked: "checked"
+							},
+							element: null,
+							parentElement: null,
+							callback_remove: function(){},
+							callback_checkbox: function(){}
+						});
+
+						proto.constructor = function(){
+							var parent = SelfObj.htmlElement = proto.htmlNodes.main[0] = cwe("tr","",options.holder);
+							var checkBox = proto.htmlNodes.checkBox = cwe("input","type,checkbox",cwe("td","class,checkbx",parent));
+							var name = proto.htmlNodes.name = cwe("span","class,elink",cwe("td","class,name",parent));
+							var priority = proto.htmlNodes.priority = cwe("td","class,priority",parent);
+							var option = cwe("td","class,option",parent);
+
+							var icon_edit = new g.control.icon({
+								holder: option,
+								iconSize: 16,
+								classes: ["edit"],
+								tooltip: lng.listTable.option.icons.edit.tooltip,
+								onClick: function(icon){
+									var msg = new g.form.messageBox({type: g.const.form.messageBox.type.input},{visible: false},{
+										input: {
+											title: lng.msg.edit.title,
+											text: lng.msg.edit.text,
+											data: {
+												value: SelfObj.getReferer()
+											},
+											onClick: {
+												ok: function(msg){
+													SelfObj.setReferer(msg.areaset.getControl(msg.input.input).getValue());
+
+													msg.destroy();
+												}
+											}
+										}
+									});
+									msg.show({effect: true});
+								}
+							},{visible: true});
+							var icon_priority = new g.control.icon({
+								holder: option,
+								iconSize: 16,
+								classes: ["priority"],
+								tooltip: lng.listTable.option.icons.priority.tooltip,
+								onClick: function(icon){
+									var msg = new g.form.messageBox({type: g.const.form.messageBox.type.number},{visible: false},{
+										number: {
+											title: lng.msg.setPriority.title,
+											text: lng.msg.setPriority.text,
+											data: {
+												value: SelfObj.getPriority()
+											},
+											onClick: {
+												ok: function(msg){
+													msg.errorHide();
+
+													if(msg.areaset.getControl(msg.input.number).state.error){
+														msg.errorShow(lng.msg.setPriority.error);
+														msg.areaset.getControl(msg.input.number).focus(true);
+														return;
+													};
+
+													SelfObj.setPriority(msg.areaset.getControl(msg.input.number).getValue());
+
+													msg.destroy();
+												}
+											}
+										}
+									});
+									msg.show({effect: true});
+								}
+							},{visible: true});
+							var icon_delete = new g.control.icon({
+								holder: option,
+								iconSize: 16,
+								classes: ["delete"],
+								tooltip: lng.listTable.option.icons["delete"].tooltip,
+								onClick: function(icon){
+									var msg = new g.form.messageBox({type: g.const.form.messageBox.type.confirm},{visible: false},{
+										confirm: {
+											title: lng.msg.removeItem.title,
+											text: lng.msg.removeItem.text,
+											onClick: {
+												ok: function(msg){
+													msg.destroy({callback: function(){
+														SelfObj.destroy();
+													}});
+												}
+											}
+										}
+									});
+									msg.show({effect: true});
+								}
+							},{visible: true});
+
+							//set name & priority
+							SelfObj.setReferer(SelfObj.getReferer());
+							SelfObj.setPriority(SelfObj.getPriority());
+
+							//set events
+							$(checkBox).click(function(e){
+								e.stopPropagation();
+							});
+							$(checkBox).change(function(e){
+								SelfObj.setChecked(e.target.checked);
+								options.callback_checkbox();
+							});
+							$(name).click(function(e){
+								e.stopPropagation();
+								icon_edit.click();
+							});
+							$(parent).click(function(e){
+								$(checkBox).click();
+							});
+						};
+
+						//PROPERTYS
+						this.state = {
+							checked: false
+						};
+						this.htmlElement = null;
+
+						//METHODS
+						this.getReferer = function(){
+							return options.element.getReferer();
+						};
+						this.getPriority = function(){
+							return options.element.getPriority();
+						};
+						this.getElement = function(){
+							return options.element;
+						};
+						this.setReferer = function(referer){
+							options.element.setReferer(referer);
+							$(proto.htmlNodes.name).text(SelfObj.getReferer());
+						};
+						this.setPriority = function(priority){
+							options.element.setPriority(priority);
+							$(proto.htmlNodes.priority).text(SelfObj.getPriority());
+						};
+						this.setChecked = function(state){
+							if(state){
+								SelfObj.state.checked = true;
+								proto.htmlNodes.checkBox.checked = true;
+								$(SelfObj.htmlElement).addClass(options["class"].checked);
+							}else{
+								SelfObj.state.checked = false;
+								proto.htmlNodes.checkBox.checked = false;
+								$(SelfObj.htmlElement).removeClass(options["class"].checked);
+							};
+						};
+
+						this.destroy = function(){
+							options.parentElement.remove(options.element);
+							options.callback_remove(SelfObj);
+							proto.destroy();
+						};
+						this.show = proto.show;
+						this.hide = proto.hide;
+						this.toogle = proto.toogle;
+
+						proto.init(opt, param);
+					};
+
+					//PROPERTYS
+					this.state = {};
+					this.htmlElement = null;
+					this.items = [];
+
+					//METHODS
+					this.addItem = function(item, parentElement){
+						SelfObj.items.push(
+							new Item({
+								holder: proto.htmlNodes.itemHolder,
+								element: item,
+								parentElement: parentElement,
+								callback_remove: function(item){
+									SelfObj.removeItem(item);
+								},
+								callback_checkbox: function(){
+									var checkAll = true,
+										checkOneOrMore = false;
+
+									$.each(SelfObj.items, function(key, item){
+										if(!item.state.checked){
+											checkAll = false;
+										}else{
+											checkOneOrMore = true;
+										};
+									});
+
+									proto.htmlNodes.checkBox_all.checked = checkAll;
+									SelfObj.groupButtonVisibleState(checkOneOrMore);
+								}
+							},{visible: true})
+						);
+					};
+					this.addItemRaw = function(text, parentElement){
+						SelfObj.addItem(options.element.addRaw(text), parentElement);
+					};
+					this.removeItem = function(item){
+						var index = $.inArray(item, SelfObj.items);
+						if(index != -1){
+							SelfObj.items.splice(index, 1);
+						};
+					};
+					this.groupButtonVisibleState = function(state){
+						if(state){
+							proto.data.btnPriority.show();
+							proto.data.btnDelete.show();
+						}else{
+							proto.data.btnPriority.hide();
+							proto.data.btnDelete.hide();
+						};
+					};
+
+					this.destroy = proto.destroy;
+					this.show = proto.show;
+					this.hide = proto.hide;
+					this.toogle = proto.toogle;
+
+					proto.init(opt, param);
+				};
+				function form_useragents(opt, param){
+					var proto = new Proto(),
+						options = proto.options,
+						SelfObj = this,
+						lng = g.lng.form.editor.form.element.form.useragents,
+						_const = {};
+
+					//options
+					$.extend(true, options, {
+						holder: document.body,
+						element: null
+					});
+
+					proto.constructor = function(){
+						var parent = SelfObj.htmlElement = proto.htmlNodes.main[0] = cwe("div","class,itemarea",options.holder);
+						proto.htmlNodes.main[1] = cwe("div","class,cleared",options.holder);
+						var listOption = cwe("div","class,listoption",parent);
+						var list_priority = proto.data.btnPriority = new g.control.list({
+							holder: listOption,
+							text: lng.listOption.priority.text,
+							classes: ["priority"],
+							onClick: function(list){
+								var msg = new g.form.messageBox({type: g.const.form.messageBox.type.number},{visible: false},{
+									number: {
+										title: lng.msg.setPriority.title,
+										text: lng.msg.setPriority.text,
+										data: {
+											value: 1
+										},
+										onClick: {
+											ok: function(msg){
+												msg.errorHide();
+
+												if(msg.areaset.getControl(msg.input.number).state.error){
+													msg.errorShow(lng.msg.setPriority.error);
+													msg.areaset.getControl(msg.input.number).focus(true);
+													return;
+												};
+
+												$.each(getCheckedFormItems(SelfObj.items), function(key, item){
+													item.setPriority(msg.areaset.getControl(msg.input.number).getValue());
+													item.setChecked(false);
+												});
+
+												proto.htmlNodes.checkBox_all.checked = false;
+												SelfObj.groupButtonVisibleState(false);
+
+												msg.destroy();
+											}
+										}
+									}
+								});
+								msg.show({effect: true});
+							}
+						},{visible: false});
+						var list_delete = proto.data.btnDelete = new g.control.list({
+							holder: listOption,
+							text: lng.listOption["delete"].text,
+							classes: ["delete"],
+							onClick: function(list){
+								var msg = new g.form.messageBox({type: g.const.form.messageBox.type.confirm},{visible: false},{
+									confirm: {
+										title: lng.msg.removeItems.title,
+										text: lng.msg.removeItems.text,
+										onClick: {
+											ok: function(msg){
+												msg.destroy({callback: function(){
+													$.each(getCheckedFormItems(SelfObj.items), function(key, item){
+														item.destroy();
+													});
+
+													proto.htmlNodes.checkBox_all.checked = false;
+													SelfObj.groupButtonVisibleState(false);
+												}});
+											}
+										}
+									}
+								});
+								msg.show({effect: true});
+							}
+						},{visible: false});
+						var btn_add = new g.control.button({
+							holder: listOption,
+							text: lng.listOption.add.text,
+							classes: ["add"],
+							onClick: function(list){
+								var msg = new g.form.messageBox({type: g.const.form.messageBox.type.textarea},{visible: false},{
+									textarea: {
+										title: lng.msg.add.title,
+										text: lng.msg.add.text,
+										onClick: {
+											ok: function(msg){
+												$.each(msg.areaset.getControl(msg.input.textarea).getValue(), function(key, text){
+													if(text.length > 0) SelfObj.addItemRaw(text, options.element);
+												});
+
+												msg.destroy();
+											}
+										}
+									}
+								});
+								msg.show({effect: true});
+							}
+						},{visible: true});
+
+						var listArea = cwe("div","class,listarea",parent);
+						var listTable = cwe("table","class,listtable",listArea);
+						var listTable_header = cwe("tr","",cwe("thead","",listTable));
+						var checkBox = proto.htmlNodes.checkBox_all = cwe("input","type,checkbox",cwe("td","class,checkbx",listTable_header));
+						$(cwe("td","class,name",listTable_header)).text(lng.listTable.name.text);
+						$(cwe("td","class,priority",listTable_header)).text(lng.listTable.priority.text);
+						$(cwe("td","class,option",listTable_header)).text(lng.listTable.option.text);
+						var listTable_body = proto.htmlNodes.itemHolder = cwe("tbody","",listTable);
+
+						//set events
+						$(checkBox).click(function(e){
+							$.each(SelfObj.items, function(key, item){
+								item.setChecked(e.target.checked);
+								SelfObj.groupButtonVisibleState(e.target.checked);
+							});
+						});
+
+						//set items
+						$.each(options.element.get(), function(key, item){
+							SelfObj.addItem(item, options.element);
+						});
+					};
+
+					function Item(opt, param){
+						var proto = new Proto(),
+							options = proto.options,
+							SelfObj = this,
+							lng = g.lng.form.editor.form.element.form.useragents,
+							_const = {};
+
+						//options
+						$.extend(true, options, {
+							holder: document.body,
+							"class": {
+								checked: "checked"
+							},
+							element: null,
+							parentElement: null,
+							callback_remove: function(){},
+							callback_checkbox: function(){}
+						});
+
+						proto.constructor = function(){
+							var parent = SelfObj.htmlElement = proto.htmlNodes.main[0] = cwe("tr","",options.holder);
+							var checkBox = proto.htmlNodes.checkBox = cwe("input","type,checkbox",cwe("td","class,checkbx",parent));
+							var name = proto.htmlNodes.name = cwe("span","class,elink",cwe("td","class,name",parent));
+							var priority = proto.htmlNodes.priority = cwe("td","class,priority",parent);
+							var option = cwe("td","class,option",parent);
+
+							var icon_edit = new g.control.icon({
+								holder: option,
+								iconSize: 16,
+								classes: ["edit"],
+								tooltip: lng.listTable.option.icons.edit.tooltip,
+								onClick: function(icon){
+									var msg = new g.form.messageBox({type: g.const.form.messageBox.type.input},{visible: false},{
+										input: {
+											title: lng.msg.edit.title,
+											text: lng.msg.edit.text,
+											data: {
+												value: SelfObj.getUserAgent()
+											},
+											onClick: {
+												ok: function(msg){
+													SelfObj.setUserAgent(msg.areaset.getControl(msg.input.input).getValue());
+
+													msg.destroy();
+												}
+											}
+										}
+									});
+									msg.show({effect: true});
+								}
+							},{visible: true});
+							var icon_priority = new g.control.icon({
+								holder: option,
+								iconSize: 16,
+								classes: ["priority"],
+								tooltip: lng.listTable.option.icons.priority.tooltip,
+								onClick: function(icon){
+									var msg = new g.form.messageBox({type: g.const.form.messageBox.type.number},{visible: false},{
+										number: {
+											title: lng.msg.setPriority.title,
+											text: lng.msg.setPriority.text,
+											data: {
+												value: SelfObj.getPriority()
+											},
+											onClick: {
+												ok: function(msg){
+													msg.errorHide();
+
+													if(msg.areaset.getControl(msg.input.number).state.error){
+														msg.errorShow(lng.msg.setPriority.error);
+														msg.areaset.getControl(msg.input.number).focus(true);
+														return;
+													};
+
+													SelfObj.setPriority(msg.areaset.getControl(msg.input.number).getValue());
+
+													msg.destroy();
+												}
+											}
+										}
+									});
+									msg.show({effect: true});
+								}
+							},{visible: true});
+							var icon_delete = new g.control.icon({
+								holder: option,
+								iconSize: 16,
+								classes: ["delete"],
+								tooltip: lng.listTable.option.icons["delete"].tooltip,
+								onClick: function(icon){
+									var msg = new g.form.messageBox({type: g.const.form.messageBox.type.confirm},{visible: false},{
+										confirm: {
+											title: lng.msg.removeItem.title,
+											text: lng.msg.removeItem.text,
+											onClick: {
+												ok: function(msg){
+													msg.destroy({callback: function(){
+														SelfObj.destroy();
+													}});
+												}
+											}
+										}
+									});
+									msg.show({effect: true});
+								}
+							},{visible: true});
+
+							//set name & priority
+							SelfObj.setUserAgent(SelfObj.getUserAgent());
+							SelfObj.setPriority(SelfObj.getPriority());
+
+							//set events
+							$(checkBox).click(function(e){
+								e.stopPropagation();
+							});
+							$(checkBox).change(function(e){
+								SelfObj.setChecked(e.target.checked);
+								options.callback_checkbox();
+							});
+							$(name).click(function(e){
+								e.stopPropagation();
+								icon_edit.click();
+							});
+							$(parent).click(function(e){
+								$(checkBox).click();
+							});
+						};
+
+						//PROPERTYS
+						this.state = {
+							checked: false
+						};
+						this.htmlElement = null;
+
+						//METHODS
+						this.getUserAgent = function(){
+							return options.element.getUserAgent();
+						};
+						this.getPriority = function(){
+							return options.element.getPriority();
+						};
+						this.getElement = function(){
+							return options.element;
+						};
+						this.setUserAgent = function(userAgent){
+							options.element.setUserAgent(userAgent);
+							$(proto.htmlNodes.name).text(SelfObj.getUserAgent());
+						};
+						this.setPriority = function(priority){
+							options.element.setPriority(priority);
+							$(proto.htmlNodes.priority).text(SelfObj.getPriority());
+						};
+						this.setChecked = function(state){
+							if(state){
+								SelfObj.state.checked = true;
+								proto.htmlNodes.checkBox.checked = true;
+								$(SelfObj.htmlElement).addClass(options["class"].checked);
+							}else{
+								SelfObj.state.checked = false;
+								proto.htmlNodes.checkBox.checked = false;
+								$(SelfObj.htmlElement).removeClass(options["class"].checked);
+							};
+						};
+
+						this.destroy = function(){
+							options.parentElement.remove(options.element);
+							options.callback_remove(SelfObj);
+							proto.destroy();
+						};
+						this.show = proto.show;
+						this.hide = proto.hide;
+						this.toogle = proto.toogle;
+
+						proto.init(opt, param);
+					};
+
+					//PROPERTYS
+					this.state = {};
+					this.htmlElement = null;
+					this.items = [];
+
+					//METHODS
+					this.addItem = function(item, parentElement){
+						SelfObj.items.push(
+							new Item({
+								holder: proto.htmlNodes.itemHolder,
+								element: item,
+								parentElement: parentElement,
+								callback_remove: function(item){
+									SelfObj.removeItem(item);
+								},
+								callback_checkbox: function(){
+									var checkAll = true,
+										checkOneOrMore = false;
+
+									$.each(SelfObj.items, function(key, item){
+										if(!item.state.checked){
+											checkAll = false;
+										}else{
+											checkOneOrMore = true;
+										};
+									});
+
+									proto.htmlNodes.checkBox_all.checked = checkAll;
+									SelfObj.groupButtonVisibleState(checkOneOrMore);
+								}
+							},{visible: true})
+						);
+					};
+					this.addItemRaw = function(text, parentElement){
+						SelfObj.addItem(options.element.addRaw(text), parentElement);
+					};
+					this.removeItem = function(item){
+						var index = $.inArray(item, SelfObj.items);
+						if(index != -1){
+							SelfObj.items.splice(index, 1);
+						};
+					};
+					this.groupButtonVisibleState = function(state){
+						if(state){
+							proto.data.btnPriority.show();
+							proto.data.btnDelete.show();
+						}else{
+							proto.data.btnPriority.hide();
+							proto.data.btnDelete.hide();
+						};
+					};
+
+					this.destroy = proto.destroy;
+					this.show = proto.show;
+					this.hide = proto.hide;
+					this.toogle = proto.toogle;
+
+					proto.init(opt, param);
+				};
+				function form_paths(opt, param){
+					var proto = new Proto(),
+						options = proto.options,
+						SelfObj = this,
+						lng = g.lng.form.editor.form.element.form.paths,
+						_const = {};
+
+					//options
+					$.extend(true, options, {
+						holder: document.body,
+						element: null
+					});
+
+					proto.constructor = function(){
+						var parent = SelfObj.htmlElement = proto.htmlNodes.main[0] = cwe("div","class,itemarea",options.holder);
+						proto.htmlNodes.main[1] = cwe("div","class,cleared",options.holder);
+						var listOption = cwe("div","class,listoption",parent);
+						var list_priority = proto.data.btnPriority = new g.control.list({
+							holder: listOption,
+							text: lng.listOption.priority.text,
+							classes: ["priority"],
+							onClick: function(list){
+								var msg = new g.form.messageBox({type: g.const.form.messageBox.type.number},{visible: false},{
+									number: {
+										title: lng.msg.setPriority.title,
+										text: lng.msg.setPriority.text,
+										data: {
+											value: 1
+										},
+										onClick: {
+											ok: function(msg){
+												msg.errorHide();
+
+												if(msg.areaset.getControl(msg.input.number).state.error){
+													msg.errorShow(lng.msg.setPriority.error);
+													msg.areaset.getControl(msg.input.number).focus(true);
+													return;
+												};
+
+												$.each(getCheckedFormItems(SelfObj.items), function(key, item){
+													item.setPriority(msg.areaset.getControl(msg.input.number).getValue());
+													item.setChecked(false);
+												});
+
+												proto.htmlNodes.checkBox_all.checked = false;
+												SelfObj.groupButtonVisibleState(false);
+
+												msg.destroy();
+											}
+										}
+									}
+								});
+								msg.show({effect: true});
+							}
+						},{visible: false});
+						var list_delete = proto.data.btnDelete = new g.control.list({
+							holder: listOption,
+							text: lng.listOption["delete"].text,
+							classes: ["delete"],
+							onClick: function(list){
+								var msg = new g.form.messageBox({type: g.const.form.messageBox.type.confirm},{visible: false},{
+									confirm: {
+										title: lng.msg.removeItems.title,
+										text: lng.msg.removeItems.text,
+										onClick: {
+											ok: function(msg){
+												msg.destroy({callback: function(){
+													$.each(getCheckedFormItems(SelfObj.items), function(key, item){
+														item.destroy();
+													});
+
+													proto.htmlNodes.checkBox_all.checked = false;
+													SelfObj.groupButtonVisibleState(false);
+												}});
+											}
+										}
+									}
+								});
+								msg.show({effect: true});
+							}
+						},{visible: false});
+						var btn_add = new g.control.button({
+							holder: listOption,
+							text: lng.listOption.add.text,
+							classes: ["add"],
+							onClick: function(list){
+								var msg = new g.form.messageBox({type: g.const.form.messageBox.type.textarea},{visible: false},{
+									textarea: {
+										title: lng.msg.add.title,
+										text: lng.msg.add.text,
+										onClick: {
+											ok: function(msg){
+												var out = [];
+												$.each(msg.areaset.getControl(msg.input.textarea).getValue(), function(key, text){
+													if(text.length > 0) out.push(text);
+												});
+
+												if(out.length > 0) SelfObj.addItemRaw(out, options.element);
+
+												msg.destroy();
+											}
+										}
+									}
+								});
+								msg.show({effect: true});
+							}
+						},{visible: true});
+
+						var listArea = cwe("div","class,listarea",parent);
+						var listTable = cwe("table","class,listtable",listArea);
+						var listTable_header = cwe("tr","",cwe("thead","",listTable));
+						var checkBox = proto.htmlNodes.checkBox_all = cwe("input","type,checkbox",cwe("td","class,checkbx",listTable_header));
+						$(cwe("td","class,name",listTable_header)).text(lng.listTable.name.text);
+						$(cwe("td","class,priority",listTable_header)).text(lng.listTable.priority.text);
+						$(cwe("td","class,option",listTable_header)).text(lng.listTable.option.text);
+						var listTable_body = proto.htmlNodes.itemHolder = cwe("tbody","",listTable);
+
+						//set events
+						$(checkBox).click(function(e){
+							$.each(SelfObj.items, function(key, item){
+								item.setChecked(e.target.checked);
+								SelfObj.groupButtonVisibleState(e.target.checked);
+							});
+						});
+
+						//set items
+						$.each(options.element.get(), function(key, item){
+							SelfObj.addItem(item, options.element);
+						});
+					};
+
+					function Item(opt, param){
+						var proto = new Proto(),
+							options = proto.options,
+							SelfObj = this,
+							lng = g.lng.form.editor.form.element.form.paths,
+							_const = {};
+
+						//options
+						$.extend(true, options, {
+							holder: document.body,
+							"class": {
+								checked: "checked"
+							},
+							element: null,
+							parentElement: null,
+							callback_remove: function(){},
+							callback_checkbox: function(){}
+						});
+
+						proto.constructor = function(){
+							var parent = SelfObj.htmlElement = proto.htmlNodes.main[0] = cwe("tr","",options.holder);
+							var checkBox = proto.htmlNodes.checkBox = cwe("input","type,checkbox",cwe("td","class,checkbx",parent));
+							var td_name = cwe("td","class,name",parent);
+							var name = proto.htmlNodes.name = cwe("span","class,drop",td_name);
+							var itemsHolder = proto.htmlNodes.itemsHolder = cwe("ul","id,sortable;class,list-sortable",td_name);
+							$(proto.htmlNodes.itemsHolder).disableSelection();
+							var priority = proto.htmlNodes.priority = cwe("td","class,priority",parent);
+							var option = cwe("td","class,option",parent);
+
+							var icon_edit = new g.control.icon({
+								holder: option,
+								iconSize: 16,
+								classes: ["edit"],
+								tooltip: lng.listTable.option.icons.edit.tooltip,
+								onClick: function(icon){
+									var msg = new g.form.messageBox({type: g.const.form.messageBox.type.input},{visible: false},{
+										input: {
+											title: lng.msg.rename.title,
+											text: lng.msg.rename.text,
+											data: {
+												value: SelfObj.getName()
+											},
+											onClick: {
+												ok: function(msg){
+													SelfObj.setName(msg.areaset.getControl(msg.input.input).getValue());
+
+													msg.destroy();
+												}
+											}
+										}
+									});
+									msg.show({effect: true});
+								}
+							},{visible: true});
+							var icon_priority = new g.control.icon({
+								holder: option,
+								iconSize: 16,
+								classes: ["priority"],
+								tooltip: lng.listTable.option.icons.priority.tooltip,
+								onClick: function(icon){
+									var msg = new g.form.messageBox({type: g.const.form.messageBox.type.number},{visible: false},{
+										number: {
+											title: lng.msg.setPriority.title,
+											text: lng.msg.setPriority.text,
+											data: {
+												value: SelfObj.getPriority()
+											},
+											onClick: {
+												ok: function(msg){
+													msg.errorHide();
+
+													if(msg.areaset.getControl(msg.input.number).state.error){
+														msg.errorShow(lng.msg.setPriority.error);
+														msg.areaset.getControl(msg.input.number).focus(true);
+														return;
+													};
+
+													SelfObj.setPriority(msg.areaset.getControl(msg.input.number).getValue());
+
+													msg.destroy();
+												}
+											}
+										}
+									});
+									msg.show({effect: true});
+								}
+							},{visible: true});
+							var icon_delete = new g.control.icon({
+								holder: option,
+								iconSize: 16,
+								classes: ["delete"],
+								tooltip: lng.listTable.option.icons["delete"].tooltip,
+								onClick: function(icon){
+									var msg = new g.form.messageBox({type: g.const.form.messageBox.type.confirm},{visible: false},{
+										confirm: {
+											title: lng.msg.removeItem.title,
+											text: lng.msg.removeItem.text,
+											onClick: {
+												ok: function(msg){
+													msg.destroy({callback: function(){
+														SelfObj.destroy();
+													}});
+												}
+											}
+										}
+									});
+									msg.show({effect: true});
+								}
+							},{visible: true});
+
+							//set name & priority
+							SelfObj.setName(SelfObj.getName());
+							SelfObj.setPriority(SelfObj.getPriority());
+							SelfObj.setPathRaw(SelfObj.getPathRaw());
+
+							//set events
+							$(checkBox).click(function(e){
+								e.stopPropagation();
+							});
+							$(checkBox).change(function(e){
+								SelfObj.setChecked(e.target.checked);
+								options.callback_checkbox();
+							});
+							$(name).click(function(e){
+								e.stopPropagation();
+
+								var msg = new g.form.messageBox({type: g.const.form.messageBox.type.textarea},{visible: false},{
+									textarea: {
+										title: lng.msg.edit.title,
+										text: lng.msg.edit.text,
+										data: {
+											value: SelfObj.getPathRaw().join("\r\n")
+										},
+										onClick: {
+											ok: function(msg){
+												msg.errorHide();
+
+												var out = [];
+												$.each(msg.areaset.getControl(msg.input.textarea).getValue(), function(key, text){
+													if(text.length > 0) out.push(text);
+												});
+
+												if(out.length == 0){
+													msg.errorShow(lng.msg.edit.error);
+													msg.areaset.getControl(msg.input.textarea).focus(true);
+													return;
+												};
+
+												SelfObj.setPathRaw(out);
+
+												msg.destroy();
+											}
+										}
+									}
+								});
+								msg.show({effect: true});
+							});
+							$(parent).click(function(e){
+								$(checkBox).click();
+							});
+						};
+
+						//PROPERTYS
+						this.state = {
+							checked: false
+						};
+						this.htmlElement = null;
+						this.itemsOrder = [];
+
+						//METHODS
+						this.getName = function(){
+							return options.element.getName();
+						};
+						this.getPriority = function(){
+							return options.element.getPriority();
+						};
+						this.getElement = function(){
+							return options.element;
+						};
+						this.getPathRaw = function(){
+							var out = [];
+
+							$.each(options.element.getPath().get(), function(key, pathItem){
+								out.push(pathItem.getPathItem());
+							});
+
+							return out;
+						};
+						this.setName = function(name){
+							options.element.setName(name);
+							$(proto.htmlNodes.name).text(((typeof SelfObj.getName()) == "string" && SelfObj.getName().length > 0) ? SelfObj.getName() : lng.unnamed);
+						};
+						this.setPriority = function(priority){
+							options.element.setPriority(priority);
+							$(proto.htmlNodes.priority).text(SelfObj.getPriority());
+						};
+						this.setChecked = function(state){
+							if(state){
+								SelfObj.state.checked = true;
+								proto.htmlNodes.checkBox.checked = true;
+								$(SelfObj.htmlElement).addClass(options["class"].checked);
+							}else{
+								SelfObj.state.checked = false;
+								proto.htmlNodes.checkBox.checked = false;
+								$(SelfObj.htmlElement).removeClass(options["class"].checked);
+							};
+						};
+						this.setPathRaw = function(raw){
+							//clear old items
+							$(proto.htmlNodes.itemsHolder).html("");
+							SelfObj.itemsOrder = [];
+
+							options.element.setPathRaw(raw);
+							$.each(options.element.getPath().get(), function(key, pathItem){
+								var index = SelfObj.itemsOrder.push(pathItem)-1;
+								$(cwe("li",{
+									"class": "default",
+									id: index
+								},proto.htmlNodes.itemsHolder)).text(pathItem.getPathItem());
+							});
+							$(proto.htmlNodes.itemsHolder).sortable({
+								placeholder: "move-hover",
+								axis: "y",
+								start: function(event, ui){
+									$(ui.item).removeClass("default").addClass("move");
+								},
+								stop: function(event, ui){
+									$(ui.item).removeClass("move").addClass("default");
+									$.each($(this).sortable("toArray"), function(order, key){
+										options.element.getPath().setOrder(SelfObj.itemsOrder[key], order);
+									});
+								}
+							});
+						};
+
+						this.destroy = function(){
+							options.parentElement.remove(options.element);
+							options.callback_remove(SelfObj);
+							proto.destroy();
+						};
+						this.show = proto.show;
+						this.hide = proto.hide;
+						this.toogle = proto.toogle;
+
+						proto.init(opt, param);
+					};
+
+					//PROPERTYS
+					this.state = {};
+					this.htmlElement = null;
+					this.items = [];
+
+					//METHODS
+					this.addItem = function(item, parentElement){
+						SelfObj.items.push(
+							new Item({
+								holder: proto.htmlNodes.itemHolder,
+								element: item,
+								parentElement: parentElement,
+								callback_remove: function(item){
+									SelfObj.removeItem(item);
+								},
+								callback_checkbox: function(){
+									var checkAll = true,
+										checkOneOrMore = false;
+
+									$.each(SelfObj.items, function(key, item){
+										if(!item.state.checked){
+											checkAll = false;
+										}else{
+											checkOneOrMore = true;
+										};
+									});
+
+									proto.htmlNodes.checkBox_all.checked = checkAll;
+									SelfObj.groupButtonVisibleState(checkOneOrMore);
+								}
+							},{visible: true})
+						);
+					};
+					this.addItemRaw = function(raw, parentElement){
+						SelfObj.addItem(options.element.addRaw(raw), parentElement);
+					};
+					this.removeItem = function(item){
+						var index = $.inArray(item, SelfObj.items);
+						if(index != -1){
+							SelfObj.items.splice(index, 1);
+						};
+					};
+					this.groupButtonVisibleState = function(state){
+						if(state){
+							proto.data.btnPriority.show();
+							proto.data.btnDelete.show();
+						}else{
+							proto.data.btnPriority.hide();
+							proto.data.btnDelete.hide();
+						};
+					};
+
+					this.destroy = proto.destroy;
+					this.show = proto.show;
+					this.hide = proto.hide;
+					this.toogle = proto.toogle;
+
+					proto.init(opt, param);
+				};
+
+				//PROPERTYS
+				this.state = {};
+				this.htmlElement = null;
+				this.items = {};
+				this.activeForm = null;
+
+				//METHODS
+				this.setActiveForm = function(obj){
+					var data = $.extend(true, {
+						form: function(holder){
+							return null;
+						},
+						callback: function(){}
+					}, obj);
+
+					if(SelfObj.activeForm != null){
+						SelfObj.activeForm.destroy({
+							callback: function(){
+								SelfObj.activeForm = data.form(proto.htmlNodes.main[1]);
+								SelfObj.activeForm.show({
+									effect: false,
+									callback: data.callback
+								});
+							}
+						});
+					}else{
+						SelfObj.activeForm = data.form(proto.htmlNodes.main[1]);
+						SelfObj.activeForm.show({
+							effect: false,
+							callback: data.callback
+						});
+					};
+				};
+
+				this.destroy = proto.destroy;
+				this.show = proto.show;
+				this.hide = proto.hide;
+				this.toogle = proto.toogle;
+
+				proto.init(opt, param);
+			};
 			//other functions
 			function getCheckedFormItems(itemsContainer){
 				var out = [];
@@ -3672,6 +5912,10 @@
 					});
 				};
 			};
+			this.getSize = function(){
+				var text = g.es.getJSON();
+				return g.utils.getCountSymbols(text, /[а-я]/ig) * 2 + g.utils.getCountSymbols(text, /[^а-я]/ig);
+			};
 
 			this.destroy = proto.destroy;
 			this.show = proto.show;
@@ -3691,8 +5935,12 @@
         $(document).ready(function(e){
 			//init tooltip
 			g.data.control.tooltip = new g.control.tooltip();
+			//init loader
+			g.data.control.loader = new g.control.loader();
 			//init main form
 			g.data.form.main = new g.form.main({},{visible: true});
+			//set window title
+			g.utils.setTitle([g.lng.title.base]);
 			//init start form OR init badBrowser form
 			g.data.form.main.setActiveForm({
 				form: function(holder){

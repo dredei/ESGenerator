@@ -258,7 +258,7 @@
 				}else{
 					var obj = {};
 					obj[constants.page] = raw;
-					SelfObj.add(obj);
+					return SelfObj.add(obj);
 				};
 			};
 			this.remove = function(page){
@@ -399,6 +399,13 @@
 
 				return SelfObj;
 			};
+			this.setPathRaw = function(raw){
+				var obj = {};
+				obj[constants.path] = raw;
+				SelfObj.set(obj);
+
+				return SelfObj;
+			};
 
 			//INIT
 			var def_obj = {};
@@ -420,21 +427,11 @@
 
 				return data[index];
 			};
-			/*this.addRaw = function(raw){
-				if(raw instanceof Array){
-					var out = [];
-					$.each(raw, function(key, value){
-						var obj = {};
-						obj[constants.page] = value;
-						out.push(SelfObj.add(obj));
-					});
-					return out;
-				}else{
-					var obj = {};
-					obj[constants.page] = raw;
-					SelfObj.add(obj);
-				};
-			};*/
+			this.addRaw = function(raw){
+				var obj = {};
+				obj[constants.path] = raw;
+				return SelfObj.add(obj);
+			};
 			this.remove = function(path){
 				var index = $.inArray(path, data);
 				if(index != -1) data.splice(index, 1);
