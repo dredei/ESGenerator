@@ -39,6 +39,11 @@ body {
     text-decoration: none;
 }
 
+.elink.active {
+    color: #0162ac;
+    text-decoration: none;
+}
+
 .tooltip {
     position: fixed;
     z-index: 9999;
@@ -660,10 +665,10 @@ body {
 
 .swfupload, .button-holder {
     position: absolute;
-    top:0;
-    left:0;
-    width:100%;
-    height:100%;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     z-index: 1;
 }
 
@@ -674,14 +679,15 @@ body {
 
 /*----------*/
 ul.areaset {
-    margin:0 .3em;
-    padding:0;
+    margin: 0 .3em;
+    padding: 0;
     list-style-type: none;
 }
+
 ul.areaset li {
     display: block;
-    margin:.5em 0;
-    padding:0;
+    margin: .5em 0;
+    padding: 0;
 }
 
 .p-wrap {
@@ -1017,7 +1023,6 @@ ul.areaset li {
     border-top: 5px solid #fff;
 }
 
-
 #browsers_box {
     position: relative;
     left: 50%;
@@ -1078,8 +1083,8 @@ ul.areaset li {
     display: block;
     margin: 3px;
     padding: 0 7px;
-    height:24px;
-    line-height:24px;
+    height: 24px;
+    line-height: 24px;
     border: 1px solid rgba(0, 0, 0, 0);
     font-style: italic;
     cursor: default;
@@ -1100,8 +1105,8 @@ ul.areaset li {
     display: block;
     margin: 3px;
     padding: 0 7px;
-    height:24px;
-    line-height:24px;
+    height: 24px;
+    line-height: 24px;
     border: 1px dashed #727272;
     background: #fff;
     color: #000;
@@ -1121,4 +1126,133 @@ ul.areaset li {
     background: #fff;
     color: #fff;
     white-space: nowrap;
+}
+
+.pagenavi-box {
+    margin-bottom: 1em;
+}
+
+.pagenavi {
+    display: inline-block;
+}
+
+.page-view {
+    float: right;
+    height: 24px;
+    line-height: 24px;
+}
+
+.page-view .ename, .page-view .elink {
+    display: inline-block;
+    margin: 0 .2em;
+}
+
+.page-view .elink::after {
+    content: "|";
+    display: inline-block;
+    position: relative;
+    left: .3em;
+    color: #333;
+}
+
+.page-view .elink:last-child::after {
+    content: "";
+}
+
+.pagenavi ul {
+    margin: 0;
+    padding: 0;
+    display: inline-block;
+}
+
+.page-jump {
+    position: relative;
+}
+
+.page-run-box {
+    position: absolute;
+    padding: .5em .8em;
+    top: 30px;
+    left: 0;
+    background: #fff;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, .8);
+}
+
+.page-run-title {
+    width: 180px;
+    white-space: nowrap;
+    clear: both;
+    color: #333;
+}
+
+.page-run-value {
+    display: table-cell;
+}
+
+.page-run-btn {
+    vertical-align: top;
+    display: table-cell;
+    width: auto;
+}
+.page-run-btn .button{
+    margin: 3px 0 3px .5em;
+    padding: 0 15px;
+    height: 28px;
+    line-height: 28px;
+}
+
+.pagenavi li {
+    display: inline-block;
+    margin: 0;
+    padding: 0 5px;
+    height: 24px;
+    line-height: 24px;
+    border-radius: 2px;
+    -o-border-radius: 2px;
+    -moz-border-radius: 2px;
+    -webkit-border-radius: 2px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.page-jump {
+    display: inline-block;
+    margin: 0;
+    padding: 0 !important;
+    height: auto;
+}
+
+.page-num {
+    display: inline-block;
+    margin: 0;
+    padding: 0 5px;
+    height: 24px;
+    line-height: 24px;
+    border-radius: 2px;
+    -o-border-radius: 2px;
+    -moz-border-radius: 2px;
+    -webkit-border-radius: 2px;
+}
+
+.page-jump, .page {
+    color: #aaa;
+}
+
+.page-num:hover, .page:hover {
+    background: #EEEEEE;
+}
+
+.page.active {
+    color: #ffffff;
+    background: #aac300;
+}
+
+.back-listing li, .next-listing li {
+    color: #8A8A8A;
+    background: #EEEEEE;
+}
+
+.back-listing li:hover, .next-listing li:hover {
+    color: #ffffff;
+    background: #333;
 }
