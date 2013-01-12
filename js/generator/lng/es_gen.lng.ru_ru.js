@@ -116,7 +116,7 @@ wa_gen.lng = {
 					},
 					listTable: {
 						name: {
-							text: "Имя эллемента"
+							text: "Имя элемента"
 						},
 						priority: {
 							text: "Приоритет"
