@@ -4383,11 +4383,21 @@
 										text: lng.msg.add.text,
 										onClick: {
 											ok: function(msg){
+												var out = [];
+
 												$.each(msg.areaset.getControl(msg.input.textarea).getValue(), function(key, text){
-													if(text.length > 0) SelfObj.addItemRaw(text, options.element);
+													if(text.length > 0) out.push(text);
 												});
 
-												msg.destroy();
+												msg.destroy({
+													callback: function(){
+														$.each(out, function(key, val){
+															setTimeout(function(){
+																SelfObj.addItemRaw(val, options.element);
+															}, 15);
+														});
+													}
+												});
 											}
 										}
 									}
@@ -4415,7 +4425,9 @@
 
 						//set items
 						$.each(options.element.get(), function(key, item){
-							SelfObj.addItem(item, options.element);
+							setTimeout(function(){
+								SelfObj.addItem(item, options.element);
+							}, 15);
 						});
 					};
 

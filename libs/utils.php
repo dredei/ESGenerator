@@ -61,7 +61,6 @@ function file_downloadFromUrl($url, $file){
     $resource = curl_init();
     curl_setopt($resource, CURLOPT_URL, $url);
     curl_setopt($resource, CURLOPT_FILE, $dest_file);
-    curl_setopt($resource, CURLOPT_HEADER, 0);
     curl_setopt($resource, CURLOPT_AUTOREFERER, TRUE);
     curl_setopt($resource, CURLOPT_FOLLOWLOCATION , TRUE);
     curl_setopt($resource, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows; U; Windows NT 6.1; ru; rv:1.9.0.8) Gecko/2009032609 Firefox/3.0.8');
@@ -71,8 +70,15 @@ function file_downloadFromUrl($url, $file){
     curl_setopt($resource, CURLOPT_HTTPHEADER, array('Expect:'));
     curl_exec($resource);
     $ret = curl_getinfo($resource);
-    if($ret && $ret["content_type"] && isset($content_type[$ret["content_type"]])){
-        $ext = $content_type[$ret["content_type"]];
+    if($ret && $ret["content_type"]){
+        $c_type = preg_split("/;/", $ret["content_type"]);
+        $c_type = $c_type[0];
+
+        if(isset($content_type[$c_type])){
+            $ext = $content_type[$c_type];
+        }else{
+            return false;
+        };
     }else{
         return false;
     };
