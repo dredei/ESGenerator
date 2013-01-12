@@ -4392,9 +4392,7 @@
 												msg.destroy({
 													callback: function(){
 														$.each(out, function(key, val){
-															setTimeout(function(){
-																SelfObj.addItemRaw(val, options.element);
-															}, 15);
+                                                            SelfObj.addItemRaw(val, options.element);
 														});
 													}
 												});
@@ -4425,9 +4423,7 @@
 
 						//set items
 						$.each(options.element.get(), function(key, item){
-							setTimeout(function(){
-								SelfObj.addItem(item, options.element);
-							}, 15);
+                            SelfObj.addItem(item, options.element);
 						});
 					};
 
