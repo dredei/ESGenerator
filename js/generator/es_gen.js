@@ -2369,7 +2369,7 @@
 				return options.data.length;
 			};
 			this.getCountPages = function(){
-				return Math.ceil(SelfObj.getCountData()/options.activePageView);
+				return (Math.ceil(SelfObj.getCountData()/options.activePageView) > 0) ? Math.ceil(SelfObj.getCountData()/options.activePageView) : 1;
 			};
 			this.getCurrentPage = function(){
 				return options.currentPage;
@@ -3206,7 +3206,7 @@
 									data: {
 										placeholder: "http://",
 										allowEmpty: false,
-										regexp: /^(http|https|ftp)(:\/\/)((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})|(([a-zA-Zа-яА-Я0-9\-]*\.)+[a-zA-Zа-яА-Я]{2,6}))(\/{1}.{1,})?$/
+										regexp: /^(http|https|ftp)(:\/\/)((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})|(([a-zA-Zа-яА-Я0-9\-]*\.)+[a-zA-Zа-яА-Я\-\d]{2,9}))(\/{1}.{1,})?$/
 									}
 								}
 							});
