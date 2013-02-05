@@ -700,6 +700,8 @@
 			//INIT
 			var def_obj = {};
 			def_obj[constants.exMask] = "";
+			var param_obj = {};
+			param_obj[constants.exMask] = _data;
 			_data = $.extend(true, def_obj, _data);
 			SelfObj.set(_data);
 		};
@@ -743,7 +745,9 @@
 			};
 			this.set = function(obj){
 				if(obj) $.each(obj, function(key, value){
-					SelfObj.add(value);
+					var obj = {};
+					obj[constants.exMask] = value;
+					SelfObj.add(obj);
 				});
 
 				options.onChange(ES);

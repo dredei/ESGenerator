@@ -12,7 +12,10 @@
 				if(g.data.form.main.activeForm.itemInfo){
 					g.data.form.main.activeForm.itemInfo.reload();
 				};
-				if(g.data.form.main.activeForm instanceof g.form.editor) g.data.form.main.infoArea.setSize(g.data.form.main.activeForm.getSize());
+				if(g.data.form.main.activeForm instanceof g.form.editor){
+					g.data.form.main.infoArea.setSize(g.data.form.main.activeForm.getSize());
+					if(window.localStorage) window.localStorage[g.const.cookie.es] = es.getJSON();
+				};
 			}
         },
         data: {
@@ -31,6 +34,7 @@
     g.const = {
         cookie: {
             lng: 'lng',
+			es: 'es',
             expiriesday: 30
         },
         lng: {
@@ -268,6 +272,9 @@
 				count++;
 			};
 			return count;
+		},
+		existMsgBox: function(){
+			return !($("[wa_type='messageBox']").length == 0);
 		}
     };
 
@@ -2140,6 +2147,301 @@
 			this.toogle = proto.toogle;
 
 			proto.init(opt, param);
+		},
+		navigation: function(opt, param){
+			var proto = new Proto(),
+				options = proto.options,
+				SelfObj = this,
+				lng = g.lng.control.navigation,
+				_const = {};
+
+			//options
+			$.extend(true, options, {
+				holder: document.body,
+				data: [],
+				currentPage: 1,
+				callback_selectPage: function(data){},
+				activePageView: 10,
+				countPageSpace: 2,
+				countPageView: [
+					10,
+					30,
+					50,
+					100,
+					250
+				]
+			});
+
+			proto.constructor = function(){
+				proto.data.pages = [];
+
+				var parent = proto.htmlNodes.main[0] = SelfObj.htmlElement = cwe("div","class,pagenavi-box",options.holder);
+				var pageNavi = cwe("div","class,pagenavi",parent);
+				var pageView = cwe("div","class,page-view",parent);
+					$(cwe("span","class,ename",pageView)).html(lng.countPageView.show);
+				$.each(options.countPageView, function(key, val){
+					$(cwe("span","class,elink",pageView)).html(val).addClass((val == options.activePageView) ? "active" : "").click(function(){
+						if(SelfObj.state.working) return;
+
+						$.each(pageView.childNodes, function(key, node){
+							if($(node).hasClass("elink"))$(node).removeClass("active");
+						});
+						$(this).addClass("active");
+
+						SelfObj.setActiveCountPageView(val);
+					});
+				});
+
+				var backListing = cwe("ul","class,back-listing",pageNavi);
+				var pages = proto.htmlNodes.pages = cwe("ul","class,pages",pageNavi);
+					var pageJump = cwe("li","class,page-jump",pages);
+				var nextListing = cwe("ul","class,next-listing",pageNavi);
+
+				proto.data.btn_first = new navItem({
+					holder: backListing,
+					"class": "first",
+					text: lng.first,
+					onClick: function(btn){
+						SelfObj.selectPage(1);
+					}
+				},{visible: true});
+				proto.data.btn_prev = new navItem({
+					holder: backListing,
+					"class": "prev",
+					text: lng.prev,
+					onClick: function(btn){
+						SelfObj.selectPage((options.currentPage-1 >= 1) ? options.currentPage-1 : 1);
+					}
+				},{visible: true});
+				proto.data.btn_next = new navItem({
+					holder: nextListing,
+					"class": "next",
+					text: lng.next,
+					onClick: function(btn){
+						SelfObj.selectPage((options.currentPage+1 <= SelfObj.getCountPages()) ? options.currentPage+1 : SelfObj.getCountPages());
+					}
+				},{visible: true});
+				proto.data.btn_last = new navItem({
+					holder: nextListing,
+					"class": "last",
+					text: lng.last,
+					onClick: function(btn){
+						SelfObj.selectPage(SelfObj.getCountPages());
+					}
+				},{visible: true});
+				var btn_pageJump = new navItem({
+					holder: pageJump,
+					"class": "page-num",
+					text: lng.pages,
+					onClick: function(btn){
+						proto.data.pageRunBox.toogle({effect: true});
+					}
+				},{visible: true});
+				proto.data.pageRunBox = new pageRunBox({
+					holder: pageJump,
+					navigation: SelfObj
+				},{visible: false});
+
+				SelfObj.selectPage(1);
+			};
+
+			function navItem(opt, param){
+				var proto = new Proto(),
+					options = proto.options,
+					SelfObj = this,
+					lng = g.lng.control.navigation,
+					_const = {};
+
+				//options
+				$.extend(true, options, {
+					holder: document.body,
+					"class": "",
+					text: "",
+					onClick: function(button){}
+				});
+
+				proto.constructor = function(){
+					var parent = proto.htmlNodes.main[0] = SelfObj.htmlElement = $(cwe("li","",options.holder)).addClass(options["class"])[0];
+
+					SelfObj.setText(options.text);
+					$(parent).click(function(e){
+						e.stopPropagation();
+
+						options.onClick(SelfObj);
+					});
+				};
+
+				//PROPERTYS
+				this.state = {};
+				this.htmlElement = null;
+
+				//METHODS
+				this.setText = function(text){
+					options.text = text;
+					$(SelfObj.htmlElement).html(options.text);
+				};
+				this.setOnClick = function(onClick){
+					option.onClick = onClick;
+				};
+				this.getParam = function(name){
+					return options[name];
+				};
+
+				this.destroy = proto.destroy;
+				this.show = proto.show;
+				this.hide = proto.hide;
+				this.toogle = proto.toogle;
+
+				proto.init(opt, param);
+			};
+			function pageRunBox(opt, param){
+				var proto = new Proto(),
+					options = proto.options,
+					SelfObj = this,
+					lng = g.lng.control.navigation,
+					_const = {};
+
+				//options
+				$.extend(true, options, {
+					holder: document.body,
+					animateTime: 25,
+					navigation: false
+				});
+
+				proto.constructor = function(){
+					var parent = proto.htmlNodes.main[0] = SelfObj.htmlElement = cwe("span","class,page-run-box",options.holder);
+					$(cwe("div","class,page-run-title",parent)).html(lng.goToPage);
+					var inputHolder = cwe("div","class,page-run-value",parent);
+					var input = proto.data.input = new g.control.textline({
+						holder: inputHolder,
+						type: g.const.control.textline.type.number,
+						min: 1
+					},{visible: true});
+					var buttonHolder = cwe("div","class,page-run-btn",parent);
+					$(parent).click(function(e){
+						e.stopPropagation();
+					});
+					$(window).keydown(function(e){
+						buttonContainer.setEnabledHotKey(!g.utils.existMsgBox());
+					});
+					$(window).click(function(e){
+						SelfObj.hide();
+					});
+					var buttonContainer = new g.control.buttonContainer({
+						holder: buttonHolder,
+						buttons: {
+							ok: {
+								enable: true,
+								click: function(e, button){
+									input.checkValue();
+									if(!input.state.error && input.getValue() <= options.navigation.getCountPages()) options.navigation.selectPage(parseInt(input.getValue()));
+									SelfObj.hide({effect: true});
+									input.setValue("");
+									input.setVisualError(false);
+								}
+							}
+						}
+					},{visible: true});
+				};
+
+				//PROPERTYS
+				this.state = {};
+				this.htmlElement = null;
+
+				//METHODS
+
+				this.destroy = proto.destroy;
+				this.show = proto.show;
+				this.hide = proto.hide;
+				this.toogle = proto.toogle;
+
+				proto.init(opt, param);
+			};
+
+			//PROPERTYS
+			this.state = {
+				working: false
+			};
+			this.htmlElement = null;
+
+			//METHODS
+			this.getCountData = function(){
+				return options.data.length;
+			};
+			this.getCountPages = function(){
+				return Math.ceil(SelfObj.getCountData()/options.activePageView);
+			};
+			this.getCurrentPage = function(){
+				return options.currentPage;
+			};
+			this.setCurrentPage = function(number){
+				return (options.currentPage = number);
+			};
+			this.setActiveCountPageView = function(count){
+				options.activePageView = count;
+				SelfObj.selectPage(1);
+			};
+			this.selectPage = function(number){
+				SelfObj.state.working = true;
+
+				var countData = SelfObj.getCountData(),
+					countPages = SelfObj.getCountPages(),
+					currentPage = SelfObj.setCurrentPage(number);
+
+				//change first button
+				if(currentPage-options.countPageSpace > 1) proto.data.btn_first.show();
+				else proto.data.btn_first.hide();
+				//change prev button
+				if(currentPage-1 >= 1) proto.data.btn_prev.show();
+				else proto.data.btn_prev.hide();
+				//change next button
+				if(currentPage+1 <= countPages) proto.data.btn_next.show();
+				else proto.data.btn_next.hide();
+				//change last button
+				if(currentPage+options.countPageSpace < countPages) proto.data.btn_last.show();
+				else proto.data.btn_last.hide();
+
+				//change page buttons
+				$.each(proto.data.pages, function(key, page){
+					page.destroy();
+				});
+				proto.data.pages.length = 0;
+				for(var i=currentPage-options.countPageSpace;i<=currentPage+options.countPageSpace;i++){
+					if(i >= 1 && i <= countPages){
+						var page = new navItem({
+							holder: proto.htmlNodes.pages,
+							"class": "page",
+							text: i,
+							onClick: function(btn){
+								SelfObj.selectPage(btn.getParam("text"));
+							}
+						},{visible: true});
+
+						if(i == currentPage) $(page.htmlElement).addClass("active");
+
+						proto.data.pages.push(page);
+					};
+				};
+
+				//prepare array to callback
+				var out = $.extend([],options.data);
+				out.splice(0,(currentPage-1)*options.activePageView);
+				out.length = (out.length > options.activePageView) ? options.activePageView : out.length;
+
+				options.callback_selectPage(out, function(){
+					SelfObj.state.working = false;
+				});
+			};
+			this.reload = function(){
+				SelfObj.selectPage((SelfObj.getCountPages() <= SelfObj.getCurrentPage()) ? SelfObj.getCurrentPage() : SelfObj.getCountPages());
+			};
+
+			this.destroy = proto.destroy;
+			this.show = proto.show;
+			this.hide = proto.hide;
+			this.toogle = proto.toogle;
+
+			proto.init(opt, param);
 		}
     };
 
@@ -2991,6 +3293,50 @@
 					//set text
 					$(cwe("p","",container)).text(val.text);
 				});
+
+				//use prev es
+				if(window.localStorage[g.const.cookie.es]){
+					var msg = new g.form.messageBox({type: g.const.form.messageBox.type.confirm},{visible: false},{
+						confirm: {
+							title: lng.msg.usePrevES.title,
+							text: lng.msg.usePrevES.text,
+							onClick: {
+								ok: function(msg){
+									msg.destroy({
+										callback: function(){
+											try{
+												var d = "";
+												eval("d="+window.localStorage[g.const.cookie.es]);
+
+												g.es = new wa_extSource(d,{
+													onChange: g.options.callback_esUpdate
+												});
+												g.data.form.main.setActiveForm({
+													form: function(holder){
+														return new g.form.editor({
+															holder: holder
+														},{visible: false});
+													}
+												});
+											}catch(e){
+												delete window.localStorage[g.const.cookie.es];
+
+												var _msg = new g.form.messageBox({type: g.const.form.messageBox.type.error},{visible: false},{
+													error: {
+														title: lng.msg.failedLoadFromBrowser.title,
+														text: lng.msg.failedLoadFromBrowser.text
+													}
+												});
+												_msg.show({error: true});
+											};
+										}
+									});
+								}
+							}
+						}
+					});
+					msg.show({effect: true});
+				};
 			};
 
 			//PROPERTYS
@@ -3298,6 +3644,21 @@
 							},{visible: true});
 
 						var listArea = cwe("div","class,listarea",parent);
+							var navigation = proto.data.navigation = new g.control.navigation({
+								holder: listArea,
+								data: g.es.getItems().get(),
+								callback_selectPage: function(data, callback){
+									$(proto.htmlNodes.itemHolder).html("");
+									SelfObj.items.length = 0;
+
+									$.each(data, function(key, item){
+										setTimeout(function(){
+											SelfObj.addItem(item);
+										}, 1);
+									});
+									setTimeout(callback,data.length);
+								}
+							},{visible: true});
 							var listTable = cwe("table","class,listtable",listArea);
 								var listTable_header = cwe("tr","",cwe("thead","",listTable));
 									var checkBox = proto.htmlNodes.checkBox_all = cwe("input","type,checkbox",cwe("td","class,checkbx",listTable_header));
@@ -3312,11 +3673,6 @@
 							item.setChecked(e.target.checked);
 							SelfObj.groupButtonVisibleState(e.target.checked);
 						});
-					});
-
-					//set items
-					$.each(g.es.getItems().get(), function(key, item){
-						SelfObj.addItem(item);
 					});
 				};
 
@@ -3517,6 +3873,7 @@
 							element: item,
 							callback_remove: function(item){
 								SelfObj.removeItem(item);
+								proto.data.navigation.reload();
 							},
 							callback_checkbox: function(){
 								var checkAll = true,
@@ -4405,6 +4762,21 @@
 						},{visible: true});
 
 						var listArea = cwe("div","class,listarea",parent);
+						var navigation = proto.data.navigation = new g.control.navigation({
+							holder: listArea,
+							data: options.element.get(),
+							callback_selectPage: function(data, callback){
+								$(proto.htmlNodes.itemHolder).html("");
+								SelfObj.items.length = 0;
+
+								$.each(data, function(key, item){
+									setTimeout(function(){
+										SelfObj.addItem(item, options.element);
+									}, 1);
+								});
+								setTimeout(callback,data.length);
+							}
+						},{visible: true});
 						var listTable = cwe("table","class,listtable",listArea);
 						var listTable_header = cwe("tr","",cwe("thead","",listTable));
 						var checkBox = proto.htmlNodes.checkBox_all = cwe("input","type,checkbox",cwe("td","class,checkbx",listTable_header));
@@ -4419,11 +4791,6 @@
 								item.setChecked(e.target.checked);
 								SelfObj.groupButtonVisibleState(e.target.checked);
 							});
-						});
-
-						//set items
-						$.each(options.element.get(), function(key, item){
-                            SelfObj.addItem(item, options.element);
 						});
 					};
 
@@ -4617,6 +4984,7 @@
 								parentElement: parentElement,
 								callback_remove: function(item){
 									SelfObj.removeItem(item);
+									proto.data.navigation.reload();
 								},
 								callback_checkbox: function(){
 									var checkAll = true,
@@ -4768,6 +5136,21 @@
 						},{visible: true});
 
 						var listArea = cwe("div","class,listarea",parent);
+						var navigation = proto.data.navigation = new g.control.navigation({
+							holder: listArea,
+							data: options.element.get(),
+							callback_selectPage: function(data, callback){
+								$(proto.htmlNodes.itemHolder).html("");
+								SelfObj.items.length = 0;
+
+								$.each(data, function(key, item){
+									setTimeout(function(){
+										SelfObj.addItem(item, options.element);
+									}, 1);
+								});
+								setTimeout(callback,data.length);
+							}
+						},{visible: true});
 						var listTable = cwe("table","class,listtable",listArea);
 						var listTable_header = cwe("tr","",cwe("thead","",listTable));
 						var checkBox = proto.htmlNodes.checkBox_all = cwe("input","type,checkbox",cwe("td","class,checkbx",listTable_header));
@@ -4782,11 +5165,6 @@
 								item.setChecked(e.target.checked);
 								SelfObj.groupButtonVisibleState(e.target.checked);
 							});
-						});
-
-						//set items
-						$.each(options.element.get(), function(key, item){
-							SelfObj.addItem(item, options.element);
 						});
 					};
 
@@ -4980,6 +5358,7 @@
 								parentElement: parentElement,
 								callback_remove: function(item){
 									SelfObj.removeItem(item);
+									proto.data.navigation.reload();
 								},
 								callback_checkbox: function(){
 									var checkAll = true,
@@ -5131,6 +5510,21 @@
 						},{visible: true});
 
 						var listArea = cwe("div","class,listarea",parent);
+						var navigation = proto.data.navigation = new g.control.navigation({
+							holder: listArea,
+							data: options.element.get(),
+							callback_selectPage: function(data, callback){
+								$(proto.htmlNodes.itemHolder).html("");
+								SelfObj.items.length = 0;
+
+								$.each(data, function(key, item){
+									setTimeout(function(){
+										SelfObj.addItem(item, options.element);
+									}, 1);
+								});
+								setTimeout(callback,data.length);
+							}
+						},{visible: true});
 						var listTable = cwe("table","class,listtable",listArea);
 						var listTable_header = cwe("tr","",cwe("thead","",listTable));
 						var checkBox = proto.htmlNodes.checkBox_all = cwe("input","type,checkbox",cwe("td","class,checkbx",listTable_header));
@@ -5145,11 +5539,6 @@
 								item.setChecked(e.target.checked);
 								SelfObj.groupButtonVisibleState(e.target.checked);
 							});
-						});
-
-						//set items
-						$.each(options.element.get(), function(key, item){
-							SelfObj.addItem(item, options.element);
 						});
 					};
 
@@ -5343,6 +5732,7 @@
 								parentElement: parentElement,
 								callback_remove: function(item){
 									SelfObj.removeItem(item);
+									proto.data.navigation.reload();
 								},
 								callback_checkbox: function(){
 									var checkAll = true,
@@ -5497,6 +5887,21 @@
 						},{visible: true});
 
 						var listArea = cwe("div","class,listarea",parent);
+						var navigation = proto.data.navigation = new g.control.navigation({
+							holder: listArea,
+							data: options.element.get(),
+							callback_selectPage: function(data, callback){
+								$(proto.htmlNodes.itemHolder).html("");
+								SelfObj.items.length = 0;
+
+								$.each(data, function(key, item){
+									setTimeout(function(){
+										SelfObj.addItem(item, options.element);
+									}, 1);
+								});
+								setTimeout(callback,data.length);
+							}
+						},{visible: true});
 						var listTable = cwe("table","class,listtable",listArea);
 						var listTable_header = cwe("tr","",cwe("thead","",listTable));
 						var checkBox = proto.htmlNodes.checkBox_all = cwe("input","type,checkbox",cwe("td","class,checkbx",listTable_header));
@@ -5511,11 +5916,6 @@
 								item.setChecked(e.target.checked);
 								SelfObj.groupButtonVisibleState(e.target.checked);
 							});
-						});
-
-						//set items
-						$.each(options.element.get(), function(key, item){
-							SelfObj.addItem(item, options.element);
 						});
 					};
 
@@ -5780,6 +6180,7 @@
 								parentElement: parentElement,
 								callback_remove: function(item){
 									SelfObj.removeItem(item);
+									proto.data.navigation.reload();
 								},
 								callback_checkbox: function(){
 									var checkAll = true,

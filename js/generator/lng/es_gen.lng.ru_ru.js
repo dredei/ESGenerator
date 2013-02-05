@@ -70,6 +70,14 @@ wa_gen.lng = {
 				setNameProject: {
 					title: "Новый проект",
 					text: "Введите желаемое имя проекта."
+				},
+				usePrevES: {
+					title: "Найден предыдущий внешний источник",
+					text: "Найдена копия последнего используемого внешнего источника. Загрузить её?"
+				},
+				failedLoadFromBrowser: {
+					title: "Ошибка",
+					text: "Загрузка внешнего источника завершилась неуспешно."
 				}
 			}
 		},
@@ -598,6 +606,17 @@ wa_gen.lng = {
 			selectFile: "Выбрать файл",
 			notSelectedFile: "Файл не выбран",
 			allFiles: "Все файлы"
+		},
+		navigation: {
+			countPageView: {
+				show: "Показывать:"
+			},
+			first: "«",
+			last: "»",
+			prev: "Назад",
+			next: "Вперед",
+			pages: "Страницы",
+			goToPage: "Перейти к странице"
 		}
 	},
 	other: {
