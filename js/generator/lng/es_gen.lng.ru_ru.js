@@ -605,7 +605,13 @@ wa_gen.lng = {
 		selectFile:{
 			selectFile: "Выбрать файл",
 			notSelectedFile: "Файл не выбран",
-			allFiles: "Все файлы"
+			allFiles: "Все файлы",
+			error: {
+				maxFileSize: {
+					title: "Ошибка",
+					text: "Превышен максимальный размер файла. Максимальный размер файла: <SIZE>"
+				}
+			}
 		},
 		navigation: {
 			countPageView: {

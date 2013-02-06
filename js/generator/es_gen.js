@@ -275,6 +275,15 @@
 		},
 		existMsgBox: function(){
 			return !($("[wa_type='messageBox']").length == 0);
+		},
+		arraySplit: function(arr, itemsPerArray){
+			var out = [],
+				length = arr.length,
+				count = Math.ceil(length/itemsPerArray);
+
+			for(var i=1;i<=count;i++) out.push(arr.slice((i-1)*itemsPerArray, (i-1)*itemsPerArray + itemsPerArray));
+
+			return out;
 		}
     };
 
@@ -2017,6 +2026,7 @@
 				fileTypesDescription : lng.allFiles,
 				postParams: {},
 				filePostName : "Filedata",
+				maxFileSize: 3,
 				callback: function(data){}
 			});
 
@@ -2054,6 +2064,7 @@
 						post_params: options.postParams,
 						file_post_name : options.filePostName,
 						debug: false,
+						file_size_limit : options.maxFileSize+" MB",
 
 						// Button settings
 						button_width: $(btnUpload.htmlElement).outerWidth(),
@@ -2068,6 +2079,15 @@
 								if(numFilesQueued > 0){
 									for(var i=0;i<getCountAllFiles(this)-1;i++) this.cancelUpload(this.getFile(i)["id"]);
                                     SelfObj.setSelectedFile(this.getFile(getCountAllFiles(this)-1)["name"]);
+								}else{
+									SelfObj.stopUpload();
+									var msg = new g.form.messageBox({type:g.const.form.messageBox.type.error},{visible: false},{
+										error: {
+											title: lng.error.maxFileSize.title,
+											text: lng.error.maxFileSize.text.replace("<SIZE>", options.maxFileSize+"MB")
+										}
+									});
+									msg.show({effect: true});
 								};
 							}catch(ex){};
 						},
@@ -2158,7 +2178,9 @@
 			//options
 			$.extend(true, options, {
 				holder: document.body,
-				data: [],
+				data: function(){
+					return [];
+				},
 				currentPage: 1,
 				callback_selectPage: function(data){},
 				activePageView: 10,
@@ -2366,7 +2388,7 @@
 
 			//METHODS
 			this.getCountData = function(){
-				return options.data.length;
+				return options.data().length;
 			};
 			this.getCountPages = function(){
 				return (Math.ceil(SelfObj.getCountData()/options.activePageView) > 0) ? Math.ceil(SelfObj.getCountData()/options.activePageView) : 1;
@@ -2382,6 +2404,7 @@
 				SelfObj.selectPage(1);
 			};
 			this.selectPage = function(number){
+				if(SelfObj.state.working) return;
 				SelfObj.state.working = true;
 
 				var countData = SelfObj.getCountData(),
@@ -2424,16 +2447,14 @@
 				};
 
 				//prepare array to callback
-				var out = $.extend([],options.data);
-				out.splice(0,(currentPage-1)*options.activePageView);
-				out.length = (out.length > options.activePageView) ? options.activePageView : out.length;
+				var out = options.data().slice((currentPage-1)*options.activePageView, (currentPage-1)*options.activePageView + options.activePageView);
 
 				options.callback_selectPage(out, function(){
 					SelfObj.state.working = false;
 				});
 			};
 			this.reload = function(){
-				SelfObj.selectPage((SelfObj.getCountPages() <= SelfObj.getCurrentPage()) ? SelfObj.getCurrentPage() : SelfObj.getCountPages());
+				SelfObj.selectPage((SelfObj.getCountPages() >= SelfObj.getCurrentPage()) ? SelfObj.getCurrentPage() : SelfObj.getCountPages());
 			};
 
 			this.destroy = proto.destroy;
@@ -3632,9 +3653,12 @@
 											text: lng.msg.add.text,
 											onClick: {
 												ok: function(msg){
-													SelfObj.addItem(g.es.getItems().addRaw(msg.areaset.getControl(msg.input.input).getValue()));
-
-													msg.destroy();
+													msg.destroy({
+														callback: function(){
+															g.es.getItems().addRaw(msg.areaset.getControl(msg.input.input).getValue());
+															proto.data.navigation.reload();
+														}
+													});
 												}
 											}
 										}
@@ -3646,7 +3670,9 @@
 						var listArea = cwe("div","class,listarea",parent);
 							var navigation = proto.data.navigation = new g.control.navigation({
 								holder: listArea,
-								data: g.es.getItems().get(),
+								data: function(){
+									return g.es.getItems().get();
+								},
 								callback_selectPage: function(data, callback){
 									$(proto.htmlNodes.itemHolder).html("");
 									SelfObj.items.length = 0;
@@ -4740,16 +4766,30 @@
 										text: lng.msg.add.text,
 										onClick: {
 											ok: function(msg){
-												var out = [];
-
-												$.each(msg.areaset.getControl(msg.input.textarea).getValue(), function(key, text){
-													if(text.length > 0) out.push(text);
-												});
-
 												msg.destroy({
 													callback: function(){
-														$.each(out, function(key, val){
-                                                            SelfObj.addItemRaw(val, options.element);
+														g.data.control.loader.show({
+															effect: true,
+															callback: function(){
+																var items = [];
+																$.each(msg.areaset.getControl(msg.input.textarea).getValue(), function(key, text){
+																	if(text.length > 0) items.push(text);
+																});
+																items = g.utils.arraySplit(items, 50);
+																$.each(items, function(key, arr){
+																	setTimeout(function(){
+																		SelfObj.addToESRaw(arr);
+																	},1);
+																});
+																setTimeout(function(){
+																	g.data.control.loader.hide({
+																		effect: true,
+																		callback: function(){
+																			proto.data.navigation.reload();
+																		}
+																	});
+																},items.length);
+															}
 														});
 													}
 												});
@@ -4764,7 +4804,9 @@
 						var listArea = cwe("div","class,listarea",parent);
 						var navigation = proto.data.navigation = new g.control.navigation({
 							holder: listArea,
-							data: options.element.get(),
+							data: function(){
+								return options.element.get();
+							},
 							callback_selectPage: function(data, callback){
 								$(proto.htmlNodes.itemHolder).html("");
 								SelfObj.items.length = 0;
@@ -5005,7 +5047,10 @@
 						);
 					};
 					this.addItemRaw = function(text, parentElement){
-						SelfObj.addItem(options.element.addRaw(text), parentElement);
+						SelfObj.addItem(SelfObj.addToESRaw(text), parentElement);
+					};
+					this.addToESRaw = function(text){
+						return options.element.addRaw(text);
 					};
 					this.removeItem = function(item){
 						var index = $.inArray(item, SelfObj.items);
@@ -5122,11 +5167,33 @@
 										text: lng.msg.add.text,
 										onClick: {
 											ok: function(msg){
-												$.each(msg.areaset.getControl(msg.input.textarea).getValue(), function(key, text){
-													if(text.length > 0) SelfObj.addItemRaw(text, options.element);
+												msg.destroy({
+													callback: function(){
+														g.data.control.loader.show({
+															effect: true,
+															callback: function(){
+																var items = [];
+																$.each(msg.areaset.getControl(msg.input.textarea).getValue(), function(key, text){
+																	if(text.length > 0) items.push(text);
+																});
+																items = g.utils.arraySplit(items, 50);
+																$.each(items, function(key, arr){
+																	setTimeout(function(){
+																		SelfObj.addToESRaw(arr);
+																	},1);
+																});
+																setTimeout(function(){
+																	g.data.control.loader.hide({
+																		effect: true,
+																		callback: function(){
+																			proto.data.navigation.reload();
+																		}
+																	});
+																},items.length);
+															}
+														});
+													}
 												});
-
-												msg.destroy();
 											}
 										}
 									}
@@ -5138,7 +5205,9 @@
 						var listArea = cwe("div","class,listarea",parent);
 						var navigation = proto.data.navigation = new g.control.navigation({
 							holder: listArea,
-							data: options.element.get(),
+							data: function(){
+								return options.element.get();
+							},
 							callback_selectPage: function(data, callback){
 								$(proto.htmlNodes.itemHolder).html("");
 								SelfObj.items.length = 0;
@@ -5379,7 +5448,10 @@
 						);
 					};
 					this.addItemRaw = function(text, parentElement){
-						SelfObj.addItem(options.element.addRaw(text), parentElement);
+						SelfObj.addItem(SelfObj.addToESRaw(text), parentElement);
+					};
+					this.addToESRaw = function(text){
+						return options.element.addRaw(text);
 					};
 					this.removeItem = function(item){
 						var index = $.inArray(item, SelfObj.items);
@@ -5496,11 +5568,33 @@
 										text: lng.msg.add.text,
 										onClick: {
 											ok: function(msg){
-												$.each(msg.areaset.getControl(msg.input.textarea).getValue(), function(key, text){
-													if(text.length > 0) SelfObj.addItemRaw(text, options.element);
+												msg.destroy({
+													callback: function(){
+														g.data.control.loader.show({
+															effect: true,
+															callback: function(){
+																var items = [];
+																$.each(msg.areaset.getControl(msg.input.textarea).getValue(), function(key, text){
+																	if(text.length > 0) items.push(text);
+																});
+																items = g.utils.arraySplit(items, 50);
+																$.each(items, function(key, arr){
+																	setTimeout(function(){
+																		SelfObj.addToESRaw(arr);
+																	},1);
+																});
+																setTimeout(function(){
+																	g.data.control.loader.hide({
+																		effect: true,
+																		callback: function(){
+																			proto.data.navigation.reload();
+																		}
+																	});
+																},items.length);
+															}
+														});
+													}
 												});
-
-												msg.destroy();
 											}
 										}
 									}
@@ -5512,7 +5606,9 @@
 						var listArea = cwe("div","class,listarea",parent);
 						var navigation = proto.data.navigation = new g.control.navigation({
 							holder: listArea,
-							data: options.element.get(),
+							data: function(){
+								return options.element.get();
+							},
 							callback_selectPage: function(data, callback){
 								$(proto.htmlNodes.itemHolder).html("");
 								SelfObj.items.length = 0;
@@ -5753,7 +5849,10 @@
 						);
 					};
 					this.addItemRaw = function(text, parentElement){
-						SelfObj.addItem(options.element.addRaw(text), parentElement);
+						SelfObj.addItem(SelfObj.addToESRaw(text), parentElement);
+					};
+					this.addToESRaw = function(text){
+						return options.element.addRaw(text);
 					};
 					this.removeItem = function(item){
 						var index = $.inArray(item, SelfObj.items);
@@ -5875,9 +5974,10 @@
 													if(text.length > 0) out.push(text);
 												});
 
-												if(out.length > 0) SelfObj.addItemRaw(out, options.element);
+												if(out.length > 0) SelfObj.addToESRaw(out);
 
 												msg.destroy();
+												proto.data.navigation.reload();
 											}
 										}
 									}
@@ -5889,7 +5989,9 @@
 						var listArea = cwe("div","class,listarea",parent);
 						var navigation = proto.data.navigation = new g.control.navigation({
 							holder: listArea,
-							data: options.element.get(),
+							data: function(){
+								return options.element.get();
+							},
 							callback_selectPage: function(data, callback){
 								$(proto.htmlNodes.itemHolder).html("");
 								SelfObj.items.length = 0;
@@ -6201,7 +6303,10 @@
 						);
 					};
 					this.addItemRaw = function(raw, parentElement){
-						SelfObj.addItem(options.element.addRaw(raw), parentElement);
+						SelfObj.addItem(SelfObj.addToESRaw(raw), parentElement);
+					};
+					this.addToESRaw = function(text){
+						return options.element.addRaw(text);
 					};
 					this.removeItem = function(item){
 						var index = $.inArray(item, SelfObj.items);

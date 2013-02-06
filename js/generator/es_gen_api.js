@@ -240,11 +240,21 @@
 
 			//METHODS
 			this.add = function(obj){
-				var index = data.push(new Page(obj))-1;
+				var out = null;
+
+				if(obj instanceof Array){
+					out = [];
+					$.each(obj, function(key, val){
+						out.push(data[data.push(new Page(val))-1]);
+					});
+					return out;
+				}else{
+					out = data[data.push(new Page(obj))-1];
+				};
 
 				options.onChange(ES);
 
-				return data[index];
+				return out;
 			};
 			this.addRaw = function(raw){
 				if(raw instanceof Array){
@@ -252,9 +262,9 @@
 					$.each(raw, function(key, value){
 						var obj = {};
 						obj[constants.page] = value;
-						out.push(SelfObj.add(obj));
+						out.push(obj);
 					});
-					return out;
+					return SelfObj.add(out);
 				}else{
 					var obj = {};
 					obj[constants.page] = raw;
@@ -514,11 +524,21 @@
 
 			//METHODS
 			this.add = function(obj){
-				var index = data.push(new Referer(obj))-1;
+				var out = null;
+
+				if(obj instanceof Array){
+					out = [];
+					$.each(obj, function(key, val){
+						out.push(data[data.push(new Referer(val))-1]);
+					});
+					return out;
+				}else{
+					out = data[data.push(new Referer(obj))-1];
+				};
 
 				options.onChange(ES);
 
-				return data[index];
+				return out;
 			};
 			this.addRaw = function(raw){
 				if(raw instanceof Array){
@@ -526,9 +546,9 @@
 					$.each(raw, function(key, value){
 						var obj = {};
 						obj[constants.referer] = value;
-						out.push(SelfObj.add(obj));
+						out.push(obj);
 					});
-					return out;
+					return SelfObj.add(out);
 				}else{
 					var obj = {};
 					obj[constants.referer] = raw;
@@ -617,11 +637,21 @@
 
 			//METHODS
 			this.add = function(obj){
-				var index = data.push(new UserAgent(obj))-1;
+				var out = null;
+
+				if(obj instanceof Array){
+					out = [];
+					$.each(obj, function(key, val){
+						out.push(data[data.push(new UserAgent(val))-1]);
+					});
+					return out;
+				}else{
+					out = data[data.push(new UserAgent(obj))-1];
+				};
 
 				options.onChange(ES);
 
-				return data[index];
+				return out;
 			};
 			this.addRaw = function(raw){
 				if(raw instanceof Array){
@@ -629,9 +659,9 @@
 					$.each(raw, function(key, value){
 						var obj = {};
 						obj[constants.userAgent] = value;
-						out.push(SelfObj.add(obj));
+						out.push(obj);
 					});
-					return out;
+					return SelfObj.add(out);
 				}else{
 					var obj = {};
 					obj[constants.userAgent] = raw;
@@ -711,11 +741,21 @@
 
 			//METHODS
 			this.add = function(obj){
-				var index = data.push(new ExMask(obj))-1;
+				var out = null;
+
+				if(obj instanceof Array){
+					out = [];
+					$.each(obj, function(key, val){
+						out.push(data[data.push(new ExMask(val))-1]);
+					});
+					return out;
+				}else{
+					out = data[data.push(new ExMask(obj))-1];
+				};
 
 				options.onChange(ES);
 
-				return data[index];
+				return out;
 			};
 			this.addRaw = function(raw){
 				if(raw instanceof Array){
@@ -723,9 +763,9 @@
 					$.each(raw, function(key, value){
 						var obj = {};
 						obj[constants.exMask] = value;
-						out.push(SelfObj.add(obj));
+						out.push(obj);
 					});
-					return out;
+					return SelfObj.add(out);
 				}else{
 					var obj = {};
 					obj[constants.exMask] = raw;
@@ -847,11 +887,21 @@
 
 			//METHODS
 			this.add = function(obj){
-				var index = data.push(new Item(obj))-1;
+				var out = null;
+
+				if(obj instanceof Array){
+					out = [];
+					$.each(obj, function(key, val){
+						out.push(data[data.push(new Item(val))-1]);
+					});
+					return out;
+				}else{
+					out = data[data.push(new Item(obj))-1];
+				};
 
 				options.onChange(ES);
 
-				return data[index];
+				return out;
 			};
 			this.addRaw = function(raw){
 				if(raw instanceof Array){
@@ -859,9 +909,9 @@
 					$.each(raw, function(key, value){
 						var obj = {};
 						obj[constants.name] = value;
-						out.push(SelfObj.add(obj));
+						out.push(obj);
 					});
-					return out;
+					return SelfObj.add(out);
 				}else{
 					var obj = {};
 					obj[constants.name] = raw;
