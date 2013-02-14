@@ -20,6 +20,9 @@
 			userAgent: "UserAgent",
 			exMasks: "ExMasks",
 			exMask: "ExMask",
+			afterPaths: "AfterPaths",
+			domains: "Domains",
+			domain: "Domain",
 
 			//const for generator info
 			projectName: "ProjectName",
@@ -169,6 +172,47 @@
 						});
 
 						if(temp_useragents.length > 0) temp_item[constants.userAgents] = temp_useragents;
+					};
+
+					//afterPaths
+					if(ITEM.getAfterPaths().getCount() > 0){
+						var temp_afterPaths = [];
+
+						$.each(ITEM.getAfterPaths().get(), function(key, path){
+							if(path.getPath().get().length> 0) {
+								var temp_afterPath_path = [];
+								$.each(path.getPath().get(), function(key, pathItem){
+									if(pathItem.getPathItem().length > 0) temp_afterPath_path.push(pathItem.getPathItem());
+								});
+
+								if(temp_afterPath_path.length > 0){
+									var temp_path = {};
+									if(path.getName().length > 0) temp_path[constants.name] = path.getName();
+									if(path.getPriority() != defaultPriority) temp_path[constants.priority] = path.getPriority();
+									temp_path[constants.path] = temp_afterPath_path;
+
+									temp_afterPaths.push(temp_path);
+								};
+							};
+						});
+
+						if(temp_afterPaths.length > 0) temp_item[constants.afterPaths] = temp_afterPaths;
+					};
+
+					//set domains
+					if(ITEM.getDomains().getCount() > 0){
+						var temp_domains = [];
+
+						$.each(ITEM.getDomains().get(), function(key, domain){
+							if(domain.getDomain().length > 0){
+								var temp_domain = {};
+								if(domain.getPriority() != defaultPriority) temp_domain[constants.priority] = domain.getPriority();
+								temp_domain[constants.domain] = domain.getDomain();
+								temp_domains.push(temp_domain);
+							};
+						});
+
+						if(temp_domains.length > 0) temp_item[constants.domains] = temp_domains;
 					};
 
 					if(!$.isEmptyObject(temp_item)){
@@ -695,6 +739,117 @@
 			//INIT
 			SelfObj.set(_data);
 		};
+		function Domain(_data){
+			var SelfObj = this,
+				data = {};
+
+			//METHODS
+			this.get = function(param){
+				if(param){
+					return data[param];
+				}else{
+					return data;
+				};
+			};
+			this.getDomain = function(){
+				return SelfObj.get(constants.domain);
+			};
+			this.getPriority = function(){
+				return SelfObj.get(constants.priority);
+			};
+			this.set = function(obj){
+				if(obj) $.each(obj, function(key, value){
+					data[key] = value;
+				});
+
+				options.onChange(ES);
+
+				return SelfObj;
+			};
+			this.setDomain = function(domain){
+				var data = {};
+				data[constants.domain] = domain;
+				SelfObj.set(data);
+
+				return SelfObj;
+			};
+			this.setPriority = function(priority){
+				var data = {};
+				data[constants.priority] = priority;
+				SelfObj.set(data);
+
+				return SelfObj;
+			};
+
+			//INIT
+			var def_obj = {};
+			def_obj[constants.priority] = defaultPriority;
+			def_obj[constants.domain] = "";
+			_data = $.extend(true, def_obj, _data);
+			SelfObj.set(_data);
+		};
+		function Domains(_data){
+			var SelfObj = this,
+				data = [];
+
+			//METHODS
+			this.add = function(obj){
+				var out = null;
+
+				if(obj instanceof Array){
+					out = [];
+					$.each(obj, function(key, val){
+						out.push(data[data.push(new Domain(val))-1]);
+					});
+					return out;
+				}else{
+					out = data[data.push(new Domain(obj))-1];
+				};
+
+				options.onChange(ES);
+
+				return out;
+			};
+			this.addRaw = function(raw){
+				if(raw instanceof Array){
+					var out = [];
+					$.each(raw, function(key, value){
+						var obj = {};
+						obj[constants.domain] = value;
+						out.push(obj);
+					});
+					return SelfObj.add(out);
+				}else{
+					var obj = {};
+					obj[constants.domain] = raw;
+					return SelfObj.add(obj);
+				};
+			};
+			this.remove = function(domain){
+				var index = $.inArray(domain, data);
+				if(index != -1) data.splice(index, 1);
+
+				options.onChange(ES);
+
+				return SelfObj;
+			};
+			this.get = function(){
+				return data;
+			};
+			this.getCount = function(){
+				return data.length;
+			};
+			this.set = function(arr){
+				if(arr) $.each(arr, function(key, value){
+					SelfObj.add(value);
+				});
+
+				return SelfObj;
+			};
+
+			//INIT
+			SelfObj.set(_data);
+		};
 		function ExMask(_data){
 			var SelfObj = this,
 				data = {};
@@ -819,11 +974,17 @@
 			this.getPaths = function(){
 				return SelfObj.get(constants.paths);
 			};
+			this.getAfterPaths = function(){
+				return SelfObj.get(constants.afterPaths);
+			};
 			this.getReferers = function(){
 				return SelfObj.get(constants.referers);
 			};
 			this.getUserAgents = function(){
 				return SelfObj.get(constants.userAgents);
+			};
+			this.getDomains = function(){
+				return SelfObj.get(constants.domains);
 			};
 			this.getPriority = function(){
 				return SelfObj.get(constants.priority);
@@ -840,11 +1001,17 @@
 						case constants.paths:
 							data[constants.paths] = new Paths(value);
 							break;
+						case constants.afterPaths:
+							data[constants.afterPaths] = new Paths(value);
+							break;
 						case constants.referers:
 							data[constants.referers] = new Referers(value);
 							break;
 						case constants.userAgents:
 							data[constants.userAgents] = new UserAgents(value);
+							break;
+						case constants.domains:
+							data[constants.domains] = new Domains(value);
 							break;
 						default:
 							data[key] = value;
@@ -874,8 +1041,10 @@
 			var def_obj = {};
 			def_obj[constants.pages] = null;
 			def_obj[constants.paths] = null;
+			def_obj[constants.afterPaths] = null;
 			def_obj[constants.referers] = null;
 			def_obj[constants.userAgents] = null;
+			def_obj[constants.domains] = null;
 			def_obj[constants.name] = "";
 			def_obj[constants.priority] = defaultPriority;
 			_data = $.extend(true, def_obj, _data);
