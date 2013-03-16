@@ -79,6 +79,10 @@ function file_downloadFromUrl($url, $file){
         }else{
             return false;
         };
+    }else if(_getExtension($url) == "txt"){
+        $ext = $content_type["text/plain"];
+    }else if(_getExtension($url) == "zip"){
+        $ext = $content_type["application/zip"];
     }else{
         return false;
     };
@@ -131,3 +135,8 @@ function removeDir($path)
         echo "Удаляемой папки не существует или это файл!";
     }
 };
+
+function _getExtension($filename) {
+    $path_info = pathinfo($filename);
+    return $path_info['extension'];
+}
