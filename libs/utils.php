@@ -62,7 +62,7 @@ function file_downloadFromUrl($url, $file){
     curl_setopt($resource, CURLOPT_URL, $url);
     curl_setopt($resource, CURLOPT_FILE, $dest_file);
     curl_setopt($resource, CURLOPT_AUTOREFERER, TRUE);
-    curl_setopt($resource, CURLOPT_FOLLOWLOCATION , TRUE);
+    //curl_setopt($resource, CURLOPT_FOLLOWLOCATION , TRUE);
     curl_setopt($resource, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows; U; Windows NT 6.1; ru; rv:1.9.0.8) Gecko/2009032609 Firefox/3.0.8');
     curl_setopt($resource, CURLOPT_REFERER, 'http://generator.waspace.net/');
     curl_setopt($resource, CURLOPT_SSL_VERIFYPEER, 0);
