@@ -103,7 +103,10 @@ wa_gen.lng = {
 			leftMenu: {
 				setElemets: "Наборы элементов",
 				exMasks: "Исключающие маски",
-				adressReport: "Адрес отчетов"
+				adressReport: "Адрес отчетов",
+				mimeTypes: "Запрещенные MIME-типы",
+				exMimeTypes: "Разрешенные MIME-типы",
+				exExtensions: "Разрешенные расширения"
 			},
 			form: {
 				messageBox: {},

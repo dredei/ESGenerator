@@ -3552,6 +3552,54 @@
 						});
 					}
 				},{visible: true});
+				//////mime types
+				SelfObj.items.left.leftMenu.mimeTypes = new g.control.list({
+					holder: leftMenu,
+					text: lng.leftMenu.mimeTypes,
+					onClick: function(list){
+						leftMenu_setActiveItem(list);
+						SelfObj.itemInfo.hide();
+
+						//set form
+						SelfObj.setActiveForm({
+							form: function(holder){
+								return new form_exMasks({holder: holder}, {visible: false});
+							}
+						});
+					}
+				},{visible: true});
+				//////ex mime types
+				SelfObj.items.left.leftMenu.exMimeTypes = new g.control.list({
+					holder: leftMenu,
+					text: lng.leftMenu.exMimeTypes,
+					onClick: function(list){
+						leftMenu_setActiveItem(list);
+						SelfObj.itemInfo.hide();
+
+						//set form
+						SelfObj.setActiveForm({
+							form: function(holder){
+								return new form_exMasks({holder: holder}, {visible: false});
+							}
+						});
+					}
+				},{visible: true});
+				//////ex extensions
+				SelfObj.items.left.leftMenu.exExtensions = new g.control.list({
+					holder: leftMenu,
+					text: lng.leftMenu.exExtensions,
+					onClick: function(list){
+						leftMenu_setActiveItem(list);
+						SelfObj.itemInfo.hide();
+
+						//set form
+						SelfObj.setActiveForm({
+							form: function(holder){
+								return new form_exMasks({holder: holder}, {visible: false});
+							}
+						});
+					}
+				},{visible: true});
 				//////adress report
 				SelfObj.items.left.leftMenu.adressReport = new g.control.list({
 					holder: leftMenu,
