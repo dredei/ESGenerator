@@ -108,6 +108,36 @@
 				if(temp_exMasks.length > 0) out[constants.exMasks] = temp_exMasks;
 			};
 
+			//set MimeTypes
+			if(SelfObj.getMimeTypes().getCount() > 0){
+				var temp_mimeTypes = [];
+				$.each(SelfObj.getMimeTypes().get(), function(key, mimeType){
+					if(mimeType.getMimeType().length > 0) temp_mimeTypes.push(mimeType.getMimeType());
+				});
+
+				if(temp_mimeTypes.length > 0) out[constants.mimeTypes] = temp_mimeTypes;
+			};
+
+			//set ExMimeTypes
+			if(SelfObj.getExMimeTypes().getCount() > 0){
+				var temp_mimeTypes = [];
+				$.each(SelfObj.getExMimeTypes().get(), function(key, mimeType){
+					if(mimeType.getMimeType().length > 0) temp_mimeTypes.push(mimeType.getMimeType());
+				});
+
+				if(temp_mimeTypes.length > 0) out[constants.exMimeTypes] = temp_mimeTypes;
+			};
+
+			//set ExExtensions
+			if(SelfObj.getExExtensions().getCount() > 0){
+				var temp_extensions = [];
+				$.each(SelfObj.getExExtensions().get(), function(key, extension){
+					if(extension.getExtension().length > 0) temp_extensions.push(extension.getExtension());
+				});
+
+				if(temp_extensions.length > 0) out[constants.exExtensions] = temp_extensions;
+			};
+
 			//set Items
 			if(SelfObj.get(constants.items).getCount() > 0){
 				var temp_items = [];
