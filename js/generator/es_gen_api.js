@@ -23,6 +23,11 @@
 			afterPaths: "AfterPaths",
 			domains: "Domains",
 			domain: "Domain",
+			mimeTypes: "MimeTypes",
+			mimeType: "MimeType",
+			exMimeTypes: "ExMimeTypes",
+			exExtensions: "ExExtensions",
+			extension: "Extension",
 
 			//const for generator info
 			projectName: "ProjectName",
@@ -73,7 +78,16 @@
 			return SelfObj.get(constants.items);
 		};
 		this.getExMasks = function(){
-			return SelfObj.get(constants.exMasks)
+			return SelfObj.get(constants.exMasks);
+		};
+		this.getMimeTypes = function(){
+			return SelfObj.get(constants.mimeTypes);
+		};
+		this.getExMimeTypes = function(){
+			return SelfObj.get(constants.exMimeTypes);
+		};
+		this.getExExtensions = function(){
+			return SelfObj.get(constants.exExtensions);
 		};
 		this.getJSON = function(){
 			var out = {};
@@ -956,6 +970,284 @@
 			//INIT
 			SelfObj.set(_data);
 		};
+		function MimeType(_data){
+			var SelfObj = this,
+				data = {};
+
+			//METHODS
+			this.get = function(param){
+				if(param){
+					return data[param];
+				}else{
+					return data;
+				};
+			};
+			this.getMimeType = function(){
+				return SelfObj.get(constants.mimeType);
+			};
+			this.set = function(obj){
+				if(obj) $.each(obj, function(key, value){
+					data[key] = value;
+				});
+
+				options.onChange(ES);
+
+				return SelfObj;
+			};
+			this.setMimeType = function(mimeType){
+				var data = {};
+				data[constants.mimeType] = mimeType;
+				SelfObj.set(data);
+
+				return SelfObj;
+			};
+
+			//INIT
+			var def_obj = {};
+			def_obj[constants.mimeType] = "";
+			var param_obj = {};
+			param_obj[constants.mimeType] = _data;
+			_data = $.extend(true, def_obj, _data);
+			SelfObj.set(_data);
+		};
+		function MimeTypes(_data){
+			var SelfObj = this,
+				data = [];
+
+			//METHODS
+			this.add = function(obj){
+				var out = null;
+
+				if(obj instanceof Array){
+					out = [];
+					$.each(obj, function(key, val){
+						out.push(data[data.push(new MimeType(val))-1]);
+					});
+					return out;
+				}else{
+					out = data[data.push(new MimeType(obj))-1];
+				};
+
+				options.onChange(ES);
+
+				return out;
+			};
+			this.addRaw = function(raw){
+				if(raw instanceof Array){
+					var out = [];
+					$.each(raw, function(key, value){
+						var obj = {};
+						obj[constants.mimeType] = value;
+						out.push(obj);
+					});
+					return SelfObj.add(out);
+				}else{
+					var obj = {};
+					obj[constants.mimeType] = raw;
+					return SelfObj.add(obj);
+				};
+			};
+			this.remove = function(mimeType){
+				var index = $.inArray(mimeType, data);
+				if(index != -1) data.splice(index, 1);
+
+				options.onChange(ES);
+
+				return SelfObj;
+			};
+			this.get = function(){
+				return data;
+			};
+			this.set = function(obj){
+				if(obj) $.each(obj, function(key, value){
+					var obj = {};
+					obj[constants.mimeType] = value;
+					SelfObj.add(obj);
+				});
+
+				options.onChange(ES);
+
+				return SelfObj;
+			};
+			this.getCount = function(){
+				return data.length;
+			};
+
+			//INIT
+			SelfObj.set(_data);
+		};
+		function ExMimeTypes(_data){
+			var SelfObj = this,
+				data = [];
+
+			//METHODS
+			this.add = function(obj){
+				var out = null;
+
+				if(obj instanceof Array){
+					out = [];
+					$.each(obj, function(key, val){
+						out.push(data[data.push(new MimeType(val))-1]);
+					});
+					return out;
+				}else{
+					out = data[data.push(new MimeType(obj))-1];
+				};
+
+				options.onChange(ES);
+
+				return out;
+			};
+			this.addRaw = function(raw){
+				if(raw instanceof Array){
+					var out = [];
+					$.each(raw, function(key, value){
+						var obj = {};
+						obj[constants.mimeType] = value;
+						out.push(obj);
+					});
+					return SelfObj.add(out);
+				}else{
+					var obj = {};
+					obj[constants.mimeType] = raw;
+					return SelfObj.add(obj);
+				};
+			};
+			this.remove = function(mimeType){
+				var index = $.inArray(mimeType, data);
+				if(index != -1) data.splice(index, 1);
+
+				options.onChange(ES);
+
+				return SelfObj;
+			};
+			this.get = function(){
+				return data;
+			};
+			this.set = function(obj){
+				if(obj) $.each(obj, function(key, value){
+					var obj = {};
+					obj[constants.mimeType] = value;
+					SelfObj.add(obj);
+				});
+
+				options.onChange(ES);
+
+				return SelfObj;
+			};
+			this.getCount = function(){
+				return data.length;
+			};
+
+			//INIT
+			SelfObj.set(_data);
+		};
+		function Extension(_data){
+			var SelfObj = this,
+				data = {};
+
+			//METHODS
+			this.get = function(param){
+				if(param){
+					return data[param];
+				}else{
+					return data;
+				};
+			};
+			this.getExtension = function(){
+				return SelfObj.get(constants.extension);
+			};
+			this.set = function(obj){
+				if(obj) $.each(obj, function(key, value){
+					data[key] = value;
+				});
+
+				options.onChange(ES);
+
+				return SelfObj;
+			};
+			this.setExtension = function(extension){
+				var data = {};
+				data[constants.extension] = extension;
+				SelfObj.set(data);
+
+				return SelfObj;
+			};
+
+			//INIT
+			var def_obj = {};
+			def_obj[constants.extension] = "";
+			var param_obj = {};
+			param_obj[constants.extension] = _data;
+			_data = $.extend(true, def_obj, _data);
+			SelfObj.set(_data);
+		};
+		function ExExtensions(_data){
+			var SelfObj = this,
+				data = [];
+
+			//METHODS
+			this.add = function(obj){
+				var out = null;
+
+				if(obj instanceof Array){
+					out = [];
+					$.each(obj, function(key, val){
+						out.push(data[data.push(new Extension(val))-1]);
+					});
+					return out;
+				}else{
+					out = data[data.push(new Extension(obj))-1];
+				};
+
+				options.onChange(ES);
+
+				return out;
+			};
+			this.addRaw = function(raw){
+				if(raw instanceof Array){
+					var out = [];
+					$.each(raw, function(key, value){
+						var obj = {};
+						obj[constants.extension] = value;
+						out.push(obj);
+					});
+					return SelfObj.add(out);
+				}else{
+					var obj = {};
+					obj[constants.extension] = raw;
+					return SelfObj.add(obj);
+				};
+			};
+			this.remove = function(extension){
+				var index = $.inArray(extension, data);
+				if(index != -1) data.splice(index, 1);
+
+				options.onChange(ES);
+
+				return SelfObj;
+			};
+			this.get = function(){
+				return data;
+			};
+			this.set = function(obj){
+				if(obj) $.each(obj, function(key, value){
+					var obj = {};
+					obj[constants.extension] = value;
+					SelfObj.add(obj);
+				});
+
+				options.onChange(ES);
+
+				return SelfObj;
+			};
+			this.getCount = function(){
+				return data.length;
+			};
+
+			//INIT
+			SelfObj.set(_data);
+		};
 		function Item(_data){
 			var SelfObj = this,
 				data = {};
@@ -1119,6 +1411,9 @@
 		var _obj = {}, def_data = {};
 		def_data[constants.items] = null;
 		def_data[constants.exMasks] = null;
+		def_data[constants.mimeTypes] = null;
+		def_data[constants.exMimeTypes] = null;
+		def_data[constants.exExtensions] = null;
 		def_data[constants.projectName] = "";
 		def_data[constants.report] = "";
 		_data = $.extend(true, def_data, _data);
@@ -1131,6 +1426,18 @@
 					break;
 				case constants.exMasks:
 					_obj[key] = new ExMasks(value);
+					SelfObj.set(_obj);
+					break;
+				case constants.mimeTypes:
+					_obj[key] = new MimeTypes(value);
+					SelfObj.set(_obj);
+					break;
+				case constants.exMimeTypes:
+					_obj[key] = new ExMimeTypes(value);
+					SelfObj.set(_obj);
+					break;
+				case constants.exExtensions:
+					_obj[key] = new ExExtensions(value);
 					SelfObj.set(_obj);
 					break;
 				default:
