@@ -659,6 +659,150 @@ wa_gen.lng = {
 							}
 						}
 					}
+				},
+				mimeTypes: {
+					listOption: {
+						"delete": {
+							text: "Удалить",
+							tooltip: ""
+						},
+						add: {
+							text: "Добавить",
+							tooltip: ""
+						}
+					},
+					listTable: {
+						name: {
+							text: "MIME-тип"
+						},
+						option: {
+							text: "Опции",
+							icons: {
+								edit: {
+									tooltip: "Изменить"
+								},
+								"delete": {
+									tooltip: "Удалить"
+								}
+							}
+						}
+					},
+					msg: {
+						add: {
+							title: "Новый MIME-тип",
+							text: "Введите MIME-тип",
+							error: "Вы не заполнили поле с MIME-типом."
+						},
+						edit: {
+							title: "Изменение MIME-типа",
+							text: "Введите желаемый MIME-тип",
+							error: "Вы не заполнили поле с MIME-типом."
+						},
+						removeItem: {
+							title: "Удаление эллемента",
+							text: "Вы действительно хотите удалить MIME-тип?"
+						},
+						removeItems: {
+							title: "Удаление эллементов",
+							text: "Вы действительно хотите удалить выделенные MIME-типы?"
+						}
+					}
+				},
+				exMimeTypes: {
+					listOption: {
+						"delete": {
+							text: "Удалить",
+							tooltip: ""
+						},
+						add: {
+							text: "Добавить",
+							tooltip: ""
+						}
+					},
+					listTable: {
+						name: {
+							text: "MIME-тип"
+						},
+						option: {
+							text: "Опции",
+							icons: {
+								edit: {
+									tooltip: "Изменить"
+								},
+								"delete": {
+									tooltip: "Удалить"
+								}
+							}
+						}
+					},
+					msg: {
+						add: {
+							title: "Новый MIME-тип",
+							text: "Введите MIME-тип",
+							error: "Вы не заполнили поле с MIME-типом."
+						},
+						edit: {
+							title: "Изменение MIME-типа",
+							text: "Введите желаемый MIME-тип",
+							error: "Вы не заполнили поле с MIME-типом."
+						},
+						removeItem: {
+							title: "Удаление эллемента",
+							text: "Вы действительно хотите удалить MIME-тип?"
+						},
+						removeItems: {
+							title: "Удаление эллементов",
+							text: "Вы действительно хотите удалить выделенные MIME-типы?"
+						}
+					}
+				},
+				exExtensions: {
+					listOption: {
+						"delete": {
+							text: "Удалить",
+							tooltip: ""
+						},
+						add: {
+							text: "Добавить",
+							tooltip: ""
+						}
+					},
+					listTable: {
+						name: {
+							text: "Расширение"
+						},
+						option: {
+							text: "Опции",
+							icons: {
+								edit: {
+									tooltip: "Изменить"
+								},
+								"delete": {
+									tooltip: "Удалить"
+								}
+							}
+						}
+					},
+					msg: {
+						add: {
+							title: "Новое расширение",
+							text: "Введите расширение файла",
+							error: "Вы не заполнили поле с расширением."
+						},
+						edit: {
+							title: "Изменение расширения",
+							text: "Введите желаемое расширение файла",
+							error: "Вы не заполнили поле с расширением."
+						},
+						removeItem: {
+							title: "Удаление эллемента",
+							text: "Вы действительно хотите удалить расширение?"
+						},
+						removeItems: {
+							title: "Удаление эллементов",
+							text: "Вы действительно хотите удалить выделенные расширения?"
+						}
+					}
 				}
 			}
 		},
