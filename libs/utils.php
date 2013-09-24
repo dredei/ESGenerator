@@ -56,7 +56,7 @@ function file_downloadFromUrl($url, $file){
         "application/zip" => "zip",
         "text/plain" => "txt"
     );
-    $dest_file = @fopen($file, "w");
+    $dest_file = @fopen($file, "w+");
 
     $resource = curl_init();
     curl_setopt($resource, CURLOPT_URL, $url);
@@ -64,11 +64,13 @@ function file_downloadFromUrl($url, $file){
     curl_setopt($resource, CURLOPT_AUTOREFERER, TRUE);
     //curl_setopt($resource, CURLOPT_FOLLOWLOCATION , TRUE);
     curl_setopt($resource, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows; U; Windows NT 6.1; ru; rv:1.9.0.8) Gecko/2009032609 Firefox/3.0.8');
-    curl_setopt($resource, CURLOPT_REFERER, 'http://generator.waspace.net/');
+    curl_setopt($resource, CURLOPT_REFERER, 'http://esg.waspace.net/');
     curl_setopt($resource, CURLOPT_SSL_VERIFYPEER, 0);
     curl_setopt($resource, CURLOPT_SSL_VERIFYHOST, 0);
     curl_setopt($resource, CURLOPT_HTTPHEADER, array('Expect:'));
-    curl_exec($resource);
+    curl_setopt($resource, CURLOPT_RETURNTRANSFER,1);
+    $r = curl_exec($resource);
+    print_r($r);
     $ret = curl_getinfo($resource);
     if($ret && $ret["content_type"]){
         $c_type = preg_split("/;/", $ret["content_type"]);
@@ -92,7 +94,6 @@ function file_downloadFromUrl($url, $file){
     $pathinfo = pathinfo($file);
     $newFileName = $pathinfo["dirname"] . DIRECTORY_SEPARATOR . getFreeNameFile($pathinfo["dirname"], $ext);
     rename($file, $newFileName);
-
     return $newFileName;
 }
 

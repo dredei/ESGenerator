@@ -9,7 +9,8 @@ if(isset($_POST[_KEY_POST_JSON]) && $json = $_POST[_KEY_POST_JSON]){
     ini_set("magic_quotes_runtime", false);
 
     $h = fopen($fileName,"w+");
-    fwrite($h, stripslashes($json));
+    //fwrite($h, stripslashes($json));
+    fwrite($h, $json);
     fclose($h);
 
     if($zip){
