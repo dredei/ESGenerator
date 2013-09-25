@@ -7917,7 +7917,7 @@
 					};
 
 					this.destroy = function(){
-						g.es.getExMasks().remove(options.element);
+						g.es.getExMimeTypes().remove(options.element);
 						options.callback_remove(SelfObj);
 						proto.destroy();
 					};
@@ -8212,7 +8212,7 @@
 					};
 
 					this.destroy = function(){
-						g.es.getExMasks().remove(options.element);
+						g.es.getExExtensions().remove(options.element);
 						options.callback_remove(SelfObj);
 						proto.destroy();
 					};
