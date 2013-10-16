@@ -68,9 +68,9 @@ function file_downloadFromUrl($url, $file){
     curl_setopt($resource, CURLOPT_SSL_VERIFYPEER, 0);
     curl_setopt($resource, CURLOPT_SSL_VERIFYHOST, 0);
     curl_setopt($resource, CURLOPT_HTTPHEADER, array('Expect:'));
-    curl_setopt($resource, CURLOPT_RETURNTRANSFER,1);
+    //curl_setopt($resource, CURLOPT_RETURNTRANSFER,1);
     $r = curl_exec($resource);
-    print_r($r);
+    //print_r($r);
     $ret = curl_getinfo($resource);
     if($ret && $ret["content_type"]){
         $c_type = preg_split("/;/", $ret["content_type"]);
